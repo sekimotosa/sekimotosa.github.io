@@ -6,9 +6,10 @@
 <title>★メーカー大集合★</title>
 <style>
 :root {
-  --bg1: #ffff99;
-  --bg2: #ffccff;
-  --fg: #000000;
+  --bg: #000033;
+  --star: #ffffff;
+  --cyan: #00ffff;
+  --fg: #ffffff;
   --link: #0000ff;
   --visited: #800080;
   --red: #ff0000;
@@ -18,21 +19,26 @@
   --gray: #c0c0c0;
   --font: "MS PGothic", "ＭＳ Ｐゴシック", "Osaka", "Hiragino Kaku Gothic ProN", sans-serif;
   --font-serif: "MS PMincho", "ＭＳ Ｐ明朝", "Times New Roman", serif;
-  color-scheme: light;
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body {
   color: var(--fg);
-  background-color: var(--bg1);
+  background-color: var(--bg);
   background-image:
-    linear-gradient(45deg, var(--bg2) 25%, transparent 25%, transparent 75%, var(--bg2) 75%),
-    linear-gradient(45deg, var(--bg2) 25%, transparent 25%, transparent 75%, var(--bg2) 75%);
-  background-size: 40px 40px;
-  background-position: 0 0, 20px 20px;
+    radial-gradient(1px 1px at 10px 20px, var(--star), transparent),
+    radial-gradient(1px 1px at 70px 90px, var(--star), transparent),
+    radial-gradient(2px 2px at 130px 40px, var(--yellow), transparent),
+    radial-gradient(1px 1px at 160px 140px, var(--star), transparent),
+    radial-gradient(1px 1px at 40px 160px, var(--cyan), transparent),
+    radial-gradient(2px 2px at 100px 120px, var(--star), transparent);
+  background-size: 180px 180px;
 }
 body { margin: 0; font-family: var(--font); font-size: 16px; line-height: 1.5; }
-a { color: var(--link); }
-a:visited { color: var(--visited); }
+a { color: var(--cyan); }
+a:visited { color: #ff99ff; }
+.box a { color: var(--link); }
+.box a:visited { color: var(--visited); }
 .wrap { max-width: 720px; margin: 0 auto; padding: 10px 16px 40px; text-align: center; }
 
 .marquee { overflow: hidden; white-space: nowrap; background: var(--navy); color: var(--yellow); border: 4px ridge var(--gray); font-size: 15px; padding: 2px 0; margin-bottom: 10px; }
@@ -54,20 +60,20 @@ h1 {
   -webkit-background-clip: text; background-clip: text; color: transparent;
   -webkit-text-stroke: 1px #000;
   animation: rainbow 2s linear infinite;
-  filter: drop-shadow(3px 3px 0 #999);
+  filter: drop-shadow(3px 3px 0 #ff00ff);
 }
 @keyframes rainbow { to { background-position: 200% 0; } }
 .sub { margin: 0; font-size: 18px; font-weight: 700; color: var(--red); text-shadow: 1px 1px 0 var(--yellow); }
-.since { margin: 4px 0 0; font-size: 12px; color: #008000; }
+.since { margin: 4px 0 0; font-size: 12px; color: var(--lime); }
 
 .counter { margin: 12px 0; font-size: 14px; }
 .digits { display: inline-flex; vertical-align: middle; }
 .digits b { background: #000; color: var(--lime); border: 1px solid #666; font-family: "Courier New", monospace; font-size: 18px; padding: 0 4px; font-weight: 700; }
 
 hr.rainbow { border: 0; height: 8px; margin: 14px 0; background: linear-gradient(90deg, red, orange, yellow, lime, cyan, blue, magenta); }
-hr.plain { border: 0; border-top: 3px double #000; margin: 14px 0; }
+hr.plain { border: 0; border-top: 3px double #fff; margin: 14px 0; }
 
-.box { background: #ffffff; border: 5px outset var(--gray); padding: 10px; margin: 12px 0; }
+.box { background: #ffffff; color: #000; border: 5px outset var(--gray); padding: 10px; margin: 12px 0; }
 .box h2 { margin: 0 0 10px; background: var(--navy); color: #fff; font-size: 18px; font-weight: 700; padding: 2px 6px; text-align: left; }
 
 table.makers { width: 100%; border-collapse: separate; border-spacing: 3px; border: 3px outset var(--gray); background: var(--gray); }
@@ -89,7 +95,7 @@ td.ic { text-align: center !important; font-size: 34px; width: 56px; line-height
 
 .banner { display: inline-block; width: 88px; height: 31px; line-height: 27px; border: 2px outset var(--gray); background: linear-gradient(#ff6600, #ffcc00); color: #fff; font-size: 10px; font-weight: 700; text-shadow: 1px 1px 0 #000; white-space: nowrap; overflow: hidden; }
 footer { font-size: 12px; margin-top: 16px; }
-footer .small { font-size: 11px; color: #666; }
+footer .small { font-size: 11px; color: var(--gray); }
 
 @media (max-width: 480px) {
   td.no { display: none; }
