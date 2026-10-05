@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>おじさん構文メーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap">
+<style>
+:root {
+  --bg: #000033;
+  --star: #ffffff;
+  --fg: #ffffff;
+  --yellow: #ffff00;
+  --red: #ff0000;
+  --lime: #00ff00;
+  --cyan: #00ffff;
+  --magenta: #ff00ff;
+  --silver: #c0c0c0;
+  --bezel: #3a3a3a;
+  --font-dot: "DotGothic16", "MS Gothic", "Osaka", monospace;
+  --font-pixel: "Press Start 2P", "DotGothic16", monospace;
+  --font-msg: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body {
+  color: var(--fg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1px 1px at 10px 20px, var(--star), transparent),
+    radial-gradient(1px 1px at 70px 90px, var(--star), transparent),
+    radial-gradient(2px 2px at 130px 40px, var(--yellow), transparent),
+    radial-gradient(1px 1px at 160px 140px, var(--star), transparent),
+    radial-gradient(1px 1px at 40px 160px, var(--cyan), transparent),
+    radial-gradient(2px 2px at 100px 120px, var(--star), transparent);
+  background-size: 180px 180px;
+}
+body { margin: 0; font-family: var(--font-dot); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 12px 16px 40px; display: grid; gap: 16px; }
+.marquee { overflow: hidden; white-space: nowrap; background: var(--red); color: var(--yellow); border: 3px ridge var(--yellow); font-size: 15px; padding: 2px 0; }
+.marquee span { display: inline-block; padding-left: 100%; animation: scroll 18s linear infinite; }
+@keyframes scroll { to { transform: translateX(-100%); } }
+
+header { text-align: center; display: grid; gap: 6px; justify-items: center; }
+h1 {
+  margin: 0; font-family: var(--font-dot); font-weight: 400;
+  font-size: clamp(28px, 7vw, 58px); line-height: 1.15; color: var(--yellow);
+  text-shadow: 3px 3px 0 var(--red), 6px 6px 0 var(--magenta), 9px 9px 0 #000;
+  transform: rotate(-2deg); text-wrap: balance;
+}
+.sub { font-family: var(--font-pixel); font-size: 11px; color: var(--cyan); letter-spacing: .1em; }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { visibility: hidden; } }
+.tag { margin: 0; color: var(--lime); font-size: 15px; }
+.new { display: inline-block; background: var(--red); color: var(--yellow); font-family: var(--font-pixel); font-size: 10px; padding: 3px 5px; transform: rotate(-8deg); }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } .panel { order: -1; } .actions { grid-template-columns: 1fr 1fr; } .cabinet { padding: 12px 12px 8px; } }
+.cabinet { min-width: 0; background: var(--bezel); border: 6px outset #777; border-radius: 22px; padding: 18px 18px 10px; display: grid; gap: 10px; }
+.screen {
+  position: relative; background: #000; border-radius: 26px / 20px; border: 4px inset #222;
+  min-height: 260px; overflow: hidden; padding: 34px 14px 16px;
+  box-shadow: inset 0 0 40px rgba(0,255,255,.25);
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px);
+}
+.cabinet.drag .screen::after {
+  content: "ここに ドロップ!!"; position: absolute; inset: 0; display: grid; place-items: center;
+  background: rgba(0,0,51,.85); font-size: 32px; color: var(--yellow); text-shadow: 3px 3px 0 var(--red);
+}
+.badge {
+  position: absolute; top: 10px; left: 14px; pointer-events: none;
+  font-family: var(--font-pixel); font-size: 9px; color: var(--lime); text-shadow: 1px 1px 0 #000;
+}
+.chat { display: flex; gap: 10px; align-items: flex-start; }
+.avatar {
+  flex: none; width: 52px; height: 52px; border-radius: 50%; background: #ffcc66; border: 3px solid #fff;
+  display: grid; place-items: center; font-size: 30px; line-height: 1;
+}
+.bubble-col { min-width: 0; flex: 1; display: grid; gap: 2px; }
+.who { font-size: 12px; color: var(--silver); }
+.bubble {
+  position: relative; background: #8de055; color: #000; border-radius: 18px; padding: 12px 14px;
+  font-family: var(--font-msg); font-size: 16px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere;
+  user-select: all; -webkit-user-select: all; min-height: 3em;
+}
+.bubble::before { content: ""; position: absolute; left: -8px; top: 14px; border: 8px solid transparent; border-right-color: #8de055; border-left: 0; }
+.stamp { text-align: right; font-size: 11px; color: var(--silver); font-family: var(--font-pixel); }
+.cabinet-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-family: var(--font-pixel); font-size: 10px; color: var(--silver); }
+.savehint { text-align: center; color: var(--yellow); font-size: 16px; margin: 0; }
+.savehint b { color: var(--magenta); }
+.actions { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.panel { background: var(--silver); color: #000; border: 4px outset #fff; padding: 0 0 12px; display: grid; gap: 12px; }
+.titlebar { background: linear-gradient(90deg, #000080, #1084d0); color: #fff; font-weight: 700; padding: 3px 8px; font-size: 14px; display: flex; justify-content: space-between; }
+.titlebar i { font-style: normal; background: var(--silver); color: #000; border: 2px outset #fff; padding: 0 5px; font-size: 11px; line-height: 1.3; }
+.group { display: grid; gap: 8px; padding: 0 12px; }
+fieldset.group { border: 2px groove #fff; margin: 0 12px; padding: 6px 10px 10px; }
+legend { padding: 0 4px; color: #000080; font-weight: 700; }
+.arcade {
+  font: inherit; font-size: 15px; cursor: pointer; color: #fff; text-shadow: 1px 1px 0 #000;
+  border: 3px solid #000; border-radius: 999px; padding: 10px 12px; text-align: center;
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,.35), inset 0 4px 0 rgba(255,255,255,.45), 0 4px 0 #000;
+  background: var(--red);
+}
+.arcade:active { transform: translateY(3px); box-shadow: inset 0 -3px 0 rgba(0,0,0,.35), 0 1px 0 #000; }
+.arcade:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px dashed var(--magenta); outline-offset: 2px; }
+.arcade.blue { background: #0044ff; }
+.arcade.yellow { background: #ffcc00; color: #000; text-shadow: none; }
+.arcade.green { background: #00aa00; }
+
+textarea.src {
+  font-family: var(--font-msg); font-size: 15px; line-height: 1.6; width: 100%; min-height: 150px; resize: vertical;
+  padding: 6px 8px; border: 2px inset #fff; background: #fff; color: #000;
+}
+.text-in, select { font: inherit; font-size: 15px; width: 100%; padding: 3px 6px; border: 2px inset #fff; background: #fff; color: #000; }
+.field { display: grid; gap: 2px; font-size: 14px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.slider { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; align-items: center; }
+.slider span.v { font-family: var(--font-pixel); font-size: 10px; color: #000; background: var(--lime); border: 2px inset #fff; padding: 2px 4px; }
+input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
+
+.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+.toggles label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; user-select: none; }
+.toggles input { margin: 0; width: 15px; height: 15px; accent-color: #000080; }
+
+.counter { text-align: center; font-size: 14px; color: var(--fg); display: grid; gap: 6px; justify-items: center; }
+.digits { display: inline-flex; gap: 2px; }
+.digits b { font-family: var(--font-pixel); font-size: 14px; background: #000; color: var(--lime); border: 2px inset #666; padding: 4px 3px; font-weight: 400; }
+.counter small { color: var(--silver); font-size: 12px; }
+.counter .koji { background: repeating-linear-gradient(45deg, var(--yellow) 0 12px, #000 12px 24px); color: #000; padding: 4px 10px; }
+.counter .koji span { background: var(--yellow); padding: 0 6px; }
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--yellow); color: #000; border: 3px outset #fff; padding: 6px 14px; font-size: 15px; max-width: calc(100% - 32px);
+}
+@media (prefers-reduced-motion: reduce) { .marquee span, .blink { animation: none; } .marquee span { padding-left: 0; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="marquee"><span>★☆★ ようこそ！おじさん構文メーカーへ😃❗ ★☆★ 普通の文章が、おじさんのLINEに大変身だヨ✨ ★☆★ ナンチャッテ😅💦 ★☆★ 相互リンク募集中 ★☆★ 荒らしはやめてネ🙏 ★☆★</span></div>
+
+  <header>
+    <h1>おじさん構文メーカー</h1>
+    <div class="sub blink">INSERT COIN</div>
+    <p class="tag"><span class="new">NEW!</span> 文章を書くか、貼り付けるか、テキストファイルをドロップしてね！</p>
+  </header>
+
+  <div class="main">
+    <div class="cabinet" id="stage">
+      <div class="screen">
+        <span class="badge" id="badge">LV.3 OJISAN</span>
+        <div class="chat">
+          <div class="avatar" aria-hidden="true">👨</div>
+          <div class="bubble-col">
+            <div class="who" id="who">おじさん</div>
+            <div class="bubble" id="out" aria-live="polite"></div>
+            <div class="stamp" id="stamp">既読 12:34</div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="arcade" id="copy" type="button">📋 コピーする</button>
+        <button class="arcade blue" id="reroll" type="button">🎲 別パターン</button>
+      </div>
+      <div class="cabinet-foot"><span>1P</span><span>OJISAN-KOUBUN '98</span><span>2P</span></div>
+      <p class="savehint">吹き出しを<b>タップ</b>すると全部選択されるよ！<br>そのままLINEやXに<b>貼り付け</b>てね😉</p>
+    </div>
+
+    <aside class="panel">
+      <div class="titlebar">おじさん化.exe <i>×</i></div>
+
+      <div class="group">
+        <label class="field">元の文章
+          <textarea class="src" id="src" spellcheck="false">今日は仕事が忙しかったです。
+明日はラーメンを食べに行きます。
+あなたは何してるの？
+おやすみなさい。</textarea>
+        </label>
+        <div class="row">
+          <label class="arcade yellow" for="file">📂 ファイル</label>
+          <button class="arcade green" id="clear" type="button">🗑️ 消す</button>
+        </div>
+        <input type="file" id="file" accept=".txt,text/plain" hidden>
+      </div>
+
+      <fieldset class="group">
+        <legend>おじさん設定</legend>
+        <div class="slider">
+          <label for="level">おじさん度</label><span class="v" id="levelV">LV.3</span>
+          <input type="range" id="level" min="1" max="5" step="1" value="3">
+        </div>
+        <div class="field-row">
+          <label class="field">相手の名前
+            <input class="text-in" id="name" type="text" value="ゆみ" maxlength="20">
+          </label>
+          <label class="field">一人称
+            <select id="me">
+              <option value="おじさん" selected>おじさん</option>
+              <option value="ボク">ボク</option>
+              <option value="オレ">オレ</option>
+              <option value="ワシ">ワシ</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>オプション</legend>
+        <div class="toggles">
+          <label><input type="checkbox" id="fxEmoji" checked>絵文字</label>
+          <label><input type="checkbox" id="fxKana" checked>カタカナ語尾</label>
+          <label><input type="checkbox" id="fxComma" checked>読点、多め</label>
+          <label><input type="checkbox" id="fxJoke" checked>ナンチャッテ</label>
+          <label><input type="checkbox" id="fxHello" checked>あいさつ</label>
+          <label><input type="checkbox" id="fxBye" checked>締めの一言</label>
+          <label><input type="checkbox" id="fxPs">P.S.</label>
+          <label><input type="checkbox" id="fxGap">改行多め</label>
+        </div>
+      </fieldset>
+    </aside>
+  </div>
+
+  <div class="counter">
+    <div>あなたは <span class="digits" id="hits"></span> 人目のおじさんです</div>
+    <div class="koji"><span>このページは工事中です</span></div>
+    <small>800×600・フルカラー推奨 ／ リンクフリーです</small>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let seed = 3;
+  let timer = 0;
+
+  const E = {
+    happy: ['😃','😄','😆','😊','😁','😉','😘','😍','😋','✨','🎵','💕','❤️','👍','🎶','😚'],
+    sad: ['💦','😅','😥','😰','😢','😭','💧','😓'],
+    ask: ['❓','⁉️','🤔','❓❓'],
+    bang: ['❗','‼️','❗❗'],
+  };
+  const WORDS = [
+    [/ラーメン|らーめん/, '🍜'], [/ビール/, '🍺'], [/お?酒/, '🍶'], [/飲み/, '🍻'], [/ご飯|ごはん|ランチ|ディナー/, '🍚'],
+    [/寿司|すし/, '🍣'], [/焼肉|焼き肉/, '🍖'], [/カレー/, '🍛'], [/ケーキ/, '🍰'], [/コーヒー|カフェ/, '☕'],
+    [/ゴルフ/, '⛳'], [/仕事|会議|残業/, '💼'], [/会社/, '🏢'], [/電車/, '🚃'], [/車/, '🚗'], [/雨/, '☔'],
+    [/晴れ|天気/, '☀️'], [/暑/, '🥵', 1], [/寒/, '🥶', 1], [/雪/, '⛄'], [/好き/, '❤️'], [/可愛|かわいい|カワイイ/, '😍', 1],
+    [/寝|眠/, '😴', 1], [/楽し/, '😆', 1], [/嬉し|うれし/, '😃', 1], [/悲し/, '😢', 1], [/疲れ/, '💦', 1], [/風邪|熱/, '😷'],
+    [/病院/, '🏥'], [/誕生日/, '🎂'], [/おめでとう/, '🎉'], [/旅行/, '✈️'], [/海/, '🏖️'], [/猫|ねこ/, '🐱'],
+    [/犬|いぬ/, '🐶'], [/桜|花/, '🌸'], [/夜/, '🌙'], [/朝/, '☀️'], [/写真/, '📷'], [/電話/, '📞'],
+    [/頑張|がんば/, '💪', 1], [/お金/, '💰'], [/映画/, '🎬'], [/カラオケ|歌/, '🎤'], [/ゲーム/, '🎮'],
+  ];
+  const SAD = /疲|忙し|辛|つら|悲し|残念|痛|風邪|大変|雨|ごめん|すみません|申し訳|しんど|寂し|さみし/;
+  const GREET = [
+    [/^おはよう(ございます)?/, 'オハヨー', '☀️'],
+    [/^こんにちは/, 'ヤッホー', '😃'],
+    [/^こんばんは/, 'コンバンハ', '🌙'],
+    [/^おやすみ(なさい)?/, 'オヤスミ', '😴💤'],
+    [/^ありがとう(ございます)?/, 'アリガトウ', '😆'],
+    [/^お疲れ(様|さま)(です)?/, 'お疲れサマ', '🍺'],
+    [/^ごめん(なさい|ね)?/, 'ゴメンネ', '🙏'],
+    [/^了解(です|しました)?/, '了解だヨ', '👍'],
+  ];
+
+  function rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const kata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+  const isNoun = c => /[一-鿿ァ-ヺー々A-Za-z0-9]/.test(c);
+  const isJa = c => /[ぁ-ゖァ-ヺ一-鿿ー々]/.test(c);
+
+  function convert(text, o) {
+    const r = rng(seed);
+    const pick = a => a[Math.floor(r() * a.length)];
+    const chance = p => r() < p;
+    const L = o.level;
+    const nm = o.name ? o.name + 'チャン' : '';
+    const emo = (pool, n) => { if (!o.emoji) return ''; let s = ''; for (let i = 0; i < n; i++) s += pick(pool); return s; };
+
+    let t = text.replace(/\r/g, '').trim();
+    if (!t) return '';
+    t = t.replace(/(私|わたし|僕|ぼく|俺|おれ)(?![いう])/g, o.me);
+    t = t.replace(/あなた|お前|きみ(?=は|が|も|の|に|を)|君(?=は|が|も|の|に|を)/g, nm || 'キミ');
+    t = t.replace(/[…‥]+|\.{3,}|・{3,}/g, '、、、');
+    t = t.replace(/[（(]笑[)）]|[wｗ]{1,}(?=[\s。！？!?]|$)|草(?=[\s。！？!?]|$)/g, '（笑）');
+
+    const parts = [];
+    t.split(/\n+/).forEach(line => {
+      const re = /[^。！？!?]+[。！？!?]*/g;
+      let m;
+      while ((m = re.exec(line))) { const s = m[0].trim(); if (s) parts.push(s); }
+    });
+
+    const out = [];
+    let hello = '';
+    if (o.hello && L >= 2) {
+      const h = new Date().getHours();
+      const g = h < 10 ? 'オハヨー' + emo(['☀️','😃','😄'], 1) : h < 18 ? 'お疲れサマ' + emo(['😃','😊','✨'], 1) : 'コンバンハ' + emo(['🌙','😃','🍺'], 1);
+      const first = parts[0] || '';
+      if (!GREET.some(([re]) => re.test(first))) hello = (nm ? nm + '、' : '') + g + (L >= 4 ? emo(E.bang, 1) : '');
+    }
+    if (hello) out.push(hello);
+
+    parts.forEach((p, i) => {
+      const ask = /[？?]$/.test(p) || /(か|かな|の)[。？?]?$/.test(p.replace(/[！!]+$/, ''));
+      const bang = /[！!]$/.test(p);
+      let s = p.replace(/[。！？!?]+$/, '');
+      const sad = SAD.test(s);
+
+      let greeted = false;
+      for (const [re, rep, e] of GREET) {
+        if (re.test(s)) {
+          s = s.replace(re, (i === 0 && nm && o.hello && !hello ? nm + '、' : '') + rep + (o.emoji ? e : ''));
+          greeted = true;
+          break;
+        }
+      }
+
+      if (o.emoji && L >= 2) {
+        const used = new Set();
+        for (const [re, e, verb] of WORDS) {
+          if (used.size >= Math.ceil(L / 2)) break;
+          const mm = s.match(re);
+          if (mm && !used.has(e) && chance(0.35 + L * 0.13)) {
+            used.add(e);
+            const at = mm.index + mm[0].length;
+            let k = at;
+            while (verb && k < s.length && /[ぁ-ゖ]/.test(s[k]) && k - at < 4 && !/[はがもをにでとへや]/.test(s[k])) k++;
+            s = s.slice(0, k) + e + s.slice(k);
+          }
+        }
+      }
+
+      if (o.comma && L >= 2) {
+        s = s.replace(/([一-鿿ァ-ヺー])([はがもでにを])(?=[一-鿿ァ-ヺ])/g, (all, a, b) => chance(0.25 + L * 0.13) ? a + b + '、' : all);
+      }
+
+      const last = s.slice(-1);
+      if (!greeted && isJa(last)) {
+        if (ask) {
+          s = s.replace(/(かな|かい|の|か)$/, '');
+          s += pick(L >= 3 ? ['カナ', 'のカナ', 'カナ〜'] : ['かな', 'カナ']);
+        } else if (/でした$/.test(s)) s += pick(['ヨ', 'ネ', '']);
+        else if (/です$/.test(s)) s = isNoun(s.slice(-3, -2)) && chance(0.6) ? s.replace(/です$/, pick(['だヨ', 'だネ'])) : s + pick(['ヨ', 'ネ', '']);
+        else if (/ました$/.test(s)) s += pick(['ヨ', 'ヨ〜', '']);
+        else if (/ます$/.test(s)) s = chance(0.5) ? s.replace(/ます$/, pick(['マス', 'まーす', 'ますヨ'])) : s + 'ヨ';
+        else if (/ません$/.test(s)) s += pick(['ネ', 'ヨ']);
+        else if (/[ねよなわ]$/.test(s)) { if (L >= 3 && chance(0.4)) s += '〜'; }
+        else if (/[いたるうくすつぬむぶぐんだ]$/.test(s)) s += pick(['ネ', 'ヨ', 'ナ', 'ヨ〜', 'ネ〜']);
+        else if (isNoun(last)) s += pick(['だネ', 'だヨ', 'カナ']);
+      }
+
+      if (o.kana && isJa(s.slice(-1))) {
+        const km = s.match(/(ですよ|ですね|ますよ|ますね|です|ます|かな|だよ|だね|よね|よ〜|ね〜|ね|よ|な)$/);
+        if (km && chance(0.3 + L * 0.14)) s = s.slice(0, km.index) + kata(km[0]);
+        if (L >= 3) s = s.replace(/ね(?=[、\s])/g, 'ネ').replace(/よ(?=[、\s])/g, 'ヨ').replace(/ちゃん/g, 'チャン');
+      }
+
+      const n = L === 1 ? 1 : L === 2 ? 1 + (chance(0.4) ? 1 : 0) : L - 1 + (chance(0.5) ? 1 : 0);
+      let tail = '';
+      if (ask) tail = emo(E.ask, 1) + emo(sad ? E.sad : E.happy, Math.max(0, n - 1));
+      else if (bang) tail = emo(E.bang, 1) + emo(sad ? E.sad : E.happy, Math.max(0, n - 1));
+      else tail = emo(sad ? E.sad : E.happy, n) + (L >= 4 && chance(0.5) ? emo(E.bang, 1) : '');
+      if (!o.emoji) tail = ask ? '？' : bang ? '！' : (L >= 3 ? '。。。' : '。');
+      s += tail;
+
+      out.push(s);
+
+      if (o.joke && L >= 3 && i < parts.length - 1 && chance(0.12 * L)) {
+        out.push(pick(['ナンチャッテ', 'なんてネ', '（笑）', 'ナンチャッテ（笑）', '冗談だヨ']) + emo(['😜','😅','💦','😆'], L >= 4 ? 2 : 1));
+      }
+    });
+
+    if (o.joke && L >= 2 && parts.length && !out[out.length - 1].includes('（笑）') && chance(0.5 + L * 0.1)) {
+      const k = out.length - 1;
+      out[k] += pick(['（笑）', 'ナンチャッテ', '（汗）']) + emo(['😅','💦','😜'], 1);
+    }
+
+    if (o.bye && L >= 2) {
+      const me = o.me;
+      const byes = [
+        '今日も一日、頑張ろうネ' + emo(['💪','😄','✨'], 2),
+        '無理しないでネ' + emo(['😘','😊','💕'], 2),
+        '今度、美味しいご飯でもドウカナ' + emo(['❓'], 1) + emo(['😋','🍻','🍣','🍜'], 2),
+        '返信は、いつでもいいヨ（笑）' + emo(['😉','👍'], 1),
+        '風邪ひかないようにネ' + emo(['😷','💦'], 1),
+        me + 'は、いつでも味方だヨ' + emo(['👍','✨','😤'], 2),
+        'じゃあネ' + emo(['👋','😃','✨'], 2),
+      ];
+      out.push((nm && L >= 4 && chance(0.6) ? nm + '、' : '') + pick(byes));
+    }
+
+    if (o.ps) {
+      const me = o.me;
+      out.push('P.S. ' + pick([
+        me + '、最近ゴルフ始めたヨ' + emo(['⛳','😁'], 2) + '今度教えてアゲルネ' + emo(E.bang, 1),
+        '駅前に美味しいお店見つけたヨ' + emo(['🍜','😋'], 2) + 'ナンチャッテ' + emo(['😜'], 1),
+        me + '、ダイエット中だヨ' + emo(['💦','😅'], 2) + '（笑）',
+        '今日のお昼は、カツ丼だったヨ' + emo(['🍚','😋','✨'], 2),
+      ]));
+    }
+
+    return out.join(o.gap ? '\n\n' : '\n');
+  }
+
+  function opts() {
+    return {
+      level: +$('level').value,
+      name: $('name').value.trim().replace(/(ちゃん|チャン|さん)$/, ''),
+      me: $('me').value,
+      emoji: $('fxEmoji').checked,
+      kana: $('fxKana').checked,
+      comma: $('fxComma').checked,
+      joke: $('fxJoke').checked,
+      hello: $('fxHello').checked,
+      bye: $('fxBye').checked,
+      ps: $('fxPs').checked,
+      gap: $('fxGap').checked,
+    };
+  }
+
+  function render() {
+    const o = opts();
+    $('levelV').textContent = 'LV.' + o.level;
+    $('badge').textContent = 'LV.' + o.level + ' ' + ['NOVICE', 'NORMAL', 'OJISAN', 'SUPER OJISAN', 'LEGEND OJISAN'][o.level - 1];
+    $('who').textContent = o.me === 'おじさん' ? 'おじさん' : o.me + '（おじさん）';
+    const res = convert($('src').value, o);
+    $('out').textContent = res || '（ここにおじさんの返事が出るヨ😃）';
+    const d = new Date();
+    $('stamp').textContent = '既読 ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  function schedule() { clearTimeout(timer); timer = setTimeout(render, 80); }
+
+  ['src', 'name', 'level', 'me', 'fxEmoji', 'fxKana', 'fxComma', 'fxJoke', 'fxHello', 'fxBye', 'fxPs', 'fxGap']
+    .forEach(id => $(id).addEventListener('input', schedule));
+  $('me').addEventListener('change', schedule);
+  $('reroll').addEventListener('click', () => { seed = (Math.random() * 1e9) | 0; render(); });
+  $('clear').addEventListener('click', () => { $('src').value = ''; render(); $('src').focus(); });
+
+  function copyText(txt) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(txt);
+    return new Promise((ok, ng) => {
+      const ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy') ? ok() : ng(); } catch (e) { ng(e); }
+      ta.remove();
+    });
+  }
+  $('copy').addEventListener('click', () => {
+    const txt = convert($('src').value, opts());
+    if (!txt) { toast('先に文章を入れてネ💦'); return; }
+    copyText(txt).then(() => toast('コピーしたヨ😃👍')).catch(() => toast('コピーできませんでした。吹き出しを選択してコピーしてください'));
+  });
+
+  function loadFile(f) {
+    if (!f) return;
+    if (f.type && !f.type.startsWith('text/')) { toast('テキストファイルを選んでください'); return; }
+    f.text().then(t => { $('src').value = t; seed = (Math.random() * 1e9) | 0; render(); }).catch(() => toast('このファイルは読み込めませんでした'));
+  }
+  $('file').addEventListener('change', e => { loadFile(e.target.files[0]); e.target.value = ''; });
+  const stage = $('stage');
+  ['dragenter', 'dragover'].forEach(t => window.addEventListener(t, e => { e.preventDefault(); stage.classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach(t => window.addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || e.target === document.documentElement) stage.classList.remove('drag'); }));
+  window.addEventListener('drop', e => {
+    if (!e.dataTransfer) return;
+    const f = e.dataTransfer.files[0];
+    if (f) { loadFile(f); return; }
+    const t = e.dataTransfer.getData('text/plain');
+    if (t) { $('src').value = t; seed = (Math.random() * 1e9) | 0; render(); }
+  });
+
+  let tt = 0;
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2400); }
+
+  let hits = 1;
+  try { hits = (+localStorage.getItem('ojisan-hits') || 0) + 1; localStorage.setItem('ojisan-hits', hits); } catch (e) {}
+  $('hits').innerHTML = String(4649 + hits).padStart(6, '0').split('').map(d => '<b>' + d + '</b>').join('');
+
+  render();
+})();
+</script>
+</body>
+</html>

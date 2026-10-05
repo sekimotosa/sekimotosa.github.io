@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ゲーミング画像メーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap">
+<style>
+:root {
+  --bg: #000033;
+  --star: #ffffff;
+  --fg: #ffffff;
+  --yellow: #ffff00;
+  --red: #ff0000;
+  --lime: #00ff00;
+  --cyan: #00ffff;
+  --magenta: #ff00ff;
+  --silver: #c0c0c0;
+  --bezel: #3a3a3a;
+  --font-dot: "DotGothic16", "MS Gothic", "Osaka", monospace;
+  --font-pixel: "Press Start 2P", "DotGothic16", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body {
+  color: var(--fg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1px 1px at 10px 20px, var(--star), transparent),
+    radial-gradient(1px 1px at 70px 90px, var(--star), transparent),
+    radial-gradient(2px 2px at 130px 40px, var(--yellow), transparent),
+    radial-gradient(1px 1px at 160px 140px, var(--star), transparent),
+    radial-gradient(1px 1px at 40px 160px, var(--cyan), transparent),
+    radial-gradient(2px 2px at 100px 120px, var(--star), transparent);
+  background-size: 180px 180px;
+}
+body { margin: 0; font-family: var(--font-dot); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 12px 16px 40px; display: grid; gap: 16px; }
+.marquee { overflow: hidden; white-space: nowrap; background: var(--red); color: var(--yellow); border: 3px ridge var(--yellow); font-size: 15px; padding: 2px 0; }
+.marquee span { display: inline-block; padding-left: 100%; animation: scroll 16s linear infinite; }
+@keyframes scroll { to { transform: translateX(-100%); } }
+
+header { text-align: center; display: grid; gap: 6px; justify-items: center; }
+h1 {
+  margin: 0; font-family: var(--font-dot); font-weight: 400;
+  font-size: clamp(30px, 7vw, 60px); line-height: 1.15; color: var(--yellow);
+  text-shadow: 3px 3px 0 var(--red), 6px 6px 0 var(--magenta), 9px 9px 0 #000;
+  transform: rotate(-2deg); text-wrap: balance;
+}
+.sub { font-family: var(--font-pixel); font-size: 11px; color: var(--cyan); letter-spacing: .1em; }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { visibility: hidden; } }
+.tag { margin: 0; color: var(--lime); font-size: 15px; }
+.new { display: inline-block; background: var(--red); color: var(--yellow); font-family: var(--font-pixel); font-size: 10px; padding: 3px 5px; transform: rotate(-8deg); }
+kbd { font-family: var(--font-pixel); font-size: 10px; background: var(--silver); color: #000; border: 2px outset #fff; padding: 1px 4px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.cabinet { min-width: 0; background: var(--bezel); border: 6px outset #777; border-radius: 22px; padding: 18px 18px 10px; display: grid; gap: 8px; }
+.screen {
+  position: relative; background: #000; border-radius: 26px / 20px; border: 4px inset #222;
+  min-height: 260px; display: grid; place-items: center; overflow: hidden; padding: 6px;
+  box-shadow: inset 0 0 40px rgba(0,255,255,.25);
+}
+#out { display: none; }
+#view { display: block; max-width: 100%; height: auto; max-height: 70vh; -webkit-touch-callout: default; user-select: auto; }
+.cabinet.drag .screen::after {
+  content: "ここに ドロップ!!"; position: absolute; inset: 0; display: grid; place-items: center;
+  background: rgba(0,0,51,.85); font-size: 32px; color: var(--yellow); text-shadow: 3px 3px 0 var(--red);
+}
+.badge {
+  position: absolute; top: 10px; left: 14px; pointer-events: none;
+  font-family: var(--font-pixel); font-size: 9px; color: var(--lime); text-shadow: 1px 1px 0 #000;
+}
+.busy { position: absolute; bottom: 10px; right: 14px; pointer-events: none; font-family: var(--font-pixel); font-size: 10px; color: var(--yellow); }
+.cabinet-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-family: var(--font-pixel); font-size: 10px; color: var(--silver); }
+.savehint { text-align: center; color: var(--yellow); font-size: 16px; margin: 0; }
+.savehint b { color: var(--magenta); }
+.panel { background: var(--silver); color: #000; border: 4px outset #fff; padding: 0 0 12px; display: grid; gap: 12px; }
+.titlebar { background: linear-gradient(90deg, #000080, #1084d0); color: #fff; font-weight: 700; padding: 3px 8px; font-size: 14px; display: flex; justify-content: space-between; }
+.titlebar i { font-style: normal; background: var(--silver); color: #000; border: 2px outset #fff; padding: 0 5px; font-size: 11px; line-height: 1.3; }
+.group { display: grid; gap: 8px; padding: 0 12px; }
+fieldset.group { border: 2px groove #fff; margin: 0 12px; padding: 6px 10px 10px; }
+legend { padding: 0 4px; color: #000080; font-weight: 700; }
+.arcade {
+  font: inherit; font-size: 15px; cursor: pointer; color: #fff; text-shadow: 1px 1px 0 #000;
+  border: 3px solid #000; border-radius: 999px; padding: 10px 12px; text-align: center;
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,.35), inset 0 4px 0 rgba(255,255,255,.45), 0 4px 0 #000;
+  background: var(--red);
+}
+.arcade:active { transform: translateY(3px); box-shadow: inset 0 -3px 0 rgba(0,0,0,.35), 0 1px 0 #000; }
+.arcade:focus-visible, input:focus-visible { outline: 3px dashed var(--magenta); outline-offset: 2px; }
+.arcade.blue { background: #0044ff; }
+.arcade.yellow { background: #ffcc00; color: #000; text-shadow: none; }
+.arcade.green { background: #00aa00; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+input[type=file] { display: none; }
+
+.slider { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; align-items: center; }
+.slider span.v { font-family: var(--font-pixel); font-size: 10px; color: #000; background: var(--lime); border: 2px inset #fff; padding: 2px 4px; font-variant-numeric: tabular-nums; }
+input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
+
+.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+.toggles label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; user-select: none; }
+.toggles input { margin: 0; width: 15px; height: 15px; accent-color: #000080; }
+
+.note { font-size: 13px; margin: 0; color: #000; }
+.counter { text-align: center; font-size: 14px; color: var(--fg); display: grid; gap: 6px; justify-items: center; }
+.digits { display: inline-flex; gap: 2px; }
+.digits b { font-family: var(--font-pixel); font-size: 14px; background: #000; color: var(--lime); border: 2px inset #666; padding: 4px 3px; font-weight: 400; }
+.counter small { color: var(--silver); font-size: 12px; }
+.counter .koji { background: repeating-linear-gradient(45deg, var(--yellow) 0 12px, #000 12px 24px); color: #000; padding: 4px 10px; }
+.counter .koji span { background: var(--yellow); padding: 0 6px; }
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--yellow); color: #000; border: 3px outset #fff; padding: 6px 14px; font-size: 15px; max-width: calc(100% - 32px);
+}
+@media (prefers-reduced-motion: reduce) { .marquee span, .blink { animation: none; } .marquee span { padding-left: 0; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="marquee"><span>★☆★ ようこそ！ゲーミング画像メーカーへ！！ ★☆★ 画像を貼り付けるだけで1680万色に光るよ ★☆★ 相互リンク募集中 ★☆★ 荒らしはやめてね ★☆★</span></div>
+
+  <header>
+    <h1>ゲーミング画像メーカー</h1>
+    <div class="sub blink">INSERT COIN</div>
+    <p class="tag"><span class="new">NEW!</span> 画像を <kbd>Ctrl</kbd>+<kbd>V</kbd> で貼り付けるか、ファイルを選ぶかドロップしてね！</p>
+  </header>
+
+  <div class="main">
+    <div class="cabinet" id="stage">
+      <div class="screen">
+        <canvas id="out" width="960" height="600"></canvas>
+        <img id="view" alt="ゲーミング加工した画像">
+        <span class="badge" id="badge">サンプル画像</span>
+        <span class="busy blink" id="busy" hidden>NOW LOADING...</span>
+      </div>
+      <div class="cabinet-foot"><span>1P</span><span>GAMING-ATTACK '96</span><span>2P</span></div>
+      <p class="savehint">↑ 画像を<b>右クリック</b>（スマホは<b>長押し</b>）で保存できるよ！</p>
+    </div>
+
+    <aside class="panel">
+      <div class="titlebar">ゲーミング設定.exe <i>×</i></div>
+
+      <div class="group">
+        <label class="arcade" for="file">ファイルを選ぶ</label>
+        <input type="file" id="file" accept="image/*">
+        <p class="note">貼り付け（<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>V</kbd>）とドラッグ＆ドロップもOK！</p>
+      </div>
+
+      <fieldset class="group">
+        <legend>チューニング</legend>
+        <div class="slider"><span>ゲーミング度</span><span class="v" id="powerV"></span>
+          <input type="range" id="power" min="0" max="150" value="100"></div>
+        <div class="slider"><span>虹の角度</span><span class="v" id="angleV"></span>
+          <input type="range" id="angle" min="0" max="360" value="35"></div>
+        <div class="slider"><span>虹の位相</span><span class="v" id="hueV"></span>
+          <input type="range" id="hue" min="0" max="360" value="0"></div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>エフェクト</legend>
+        <div class="toggles">
+          <label><input type="checkbox" id="fxPop" checked>彩度ブースト</label>
+          <label><input type="checkbox" id="fxRainbow" checked>虹グラデ</label>
+          <label><input type="checkbox" id="fxEdge" checked>ネオン輪郭</label>
+          <label><input type="checkbox" id="fxBloom" checked>グロー</label>
+          <label><input type="checkbox" id="fxRgb" checked>RGBずらし</label>
+          <label><input type="checkbox" id="fxSpark" checked>キラキラ</label>
+          <label><input type="checkbox" id="fxScan" checked>走査線</label>
+          <label><input type="checkbox" id="fxFrame" checked>RGB枠</label>
+        </div>
+      </fieldset>
+
+      <div class="group">
+        <div class="row">
+          <button class="arcade blue" id="copy" type="button">コピー</button>
+          <button class="arcade green" id="save" type="button">PNG保存</button>
+        </div>
+        <button class="arcade yellow" id="reroll" type="button">キラキラ配置チェンジ</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="counter">
+    <div>あなたは <span class="digits" id="hits"></span> 人目のゲーマーです</div>
+    <div class="koji"><span>このページは工事中です</span></div>
+    <small>800×600・フルカラー推奨 ／ リンクフリーです</small>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const out = $('out');
+  const MAX_SIDE = 1600;
+  let src = null;
+  let seed = 7;
+  let timer = 0;
+  let userImage = false;
+  function loadBlob(blob, name) {
+    if (!blob || !blob.type.startsWith('image/')) { toast('画像ファイルを選んでください'); return; }
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { setSource(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); $('badge').textContent = name || '貼り付けた画像'; };
+    img.onerror = () => { toast('この画像は読み込めませんでした'); URL.revokeObjectURL(url); };
+    img.src = url;
+  }
+  function setSource(img, w, h) {
+    const k = Math.min(1, MAX_SIDE / Math.max(w, h));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    src = c; userImage = true; seed = (Math.random() * 1e9) | 0; render();
+  }
+  $('file').addEventListener('change', e => { const f = e.target.files[0]; if (f) loadBlob(f, f.name); e.target.value = ''; });
+  document.addEventListener('paste', e => {
+    const items = e.clipboardData ? [...e.clipboardData.items] : [];
+    const it = items.find(i => i.type.startsWith('image/'));
+    if (it) { e.preventDefault(); loadBlob(it.getAsFile(), '貼り付けた画像'); }
+    else toast('クリップボードに画像がありません');
+  });
+  const stage = $('stage');
+  ['dragenter','dragover'].forEach(t => window.addEventListener(t, e => { e.preventDefault(); stage.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(t => window.addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || e.target === document.documentElement) stage.classList.remove('drag'); }));
+  window.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) loadBlob(f, f.name); });
+  const ids = ['power','angle','hue','fxPop','fxRainbow','fxEdge','fxBloom','fxRgb','fxSpark','fxScan','fxFrame'];
+  ids.forEach(id => $(id).addEventListener('input', schedule));
+  $('reroll').addEventListener('click', () => { seed = (Math.random() * 1e9) | 0; render(); });
+  function schedule() { syncLabels(); clearTimeout(timer); timer = setTimeout(render, 60); }
+  function syncLabels() {
+    $('powerV').textContent = $('power').value + '%';
+    $('angleV').textContent = $('angle').value + '°';
+    $('hueV').textContent = $('hue').value + '°';
+  }
+  function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  function rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function blur(c, factor) {
+    const w = c.width, h = c.height;
+    let cur = c, cw = w, ch = h;
+    const steps = Math.max(1, Math.round(Math.log2(factor)));
+    for (let i = 0; i < steps; i++) {
+      cw = Math.max(1, cw >> 1); ch = Math.max(1, ch >> 1);
+      const n = mk(cw, ch), x = n.getContext('2d');
+      x.imageSmoothingQuality = 'high'; x.drawImage(cur, 0, 0, cw, ch); cur = n;
+    }
+    const r = mk(w, h), rx = r.getContext('2d');
+    rx.imageSmoothingQuality = 'high'; rx.drawImage(cur, 0, 0, w, h);
+    return r;
+  }
+  function rainbowGradient(ctx, w, h, angleDeg, hueOff) {
+    const a = angleDeg * Math.PI / 180, cx = w / 2, cy = h / 2;
+    const L = (Math.abs(Math.cos(a)) * w + Math.abs(Math.sin(a)) * h) / 2;
+    const g = ctx.createLinearGradient(cx - Math.cos(a) * L, cy - Math.sin(a) * L, cx + Math.cos(a) * L, cy + Math.sin(a) * L);
+    for (let i = 0; i <= 12; i++) g.addColorStop(i / 12, `hsl(${(hueOff + i * 30) % 360},100%,55%)`);
+    return g;
+  }
+  function hueAt(x, y, w, h, angleDeg, hueOff) {
+    const a = angleDeg * Math.PI / 180;
+    const L = (Math.abs(Math.cos(a)) * w + Math.abs(Math.sin(a)) * h) / 2 || 1;
+    const t = (((x - w / 2) * Math.cos(a) + (y - h / 2) * Math.sin(a)) / L + 1) / 2;
+    return (hueOff + t * 360) % 360;
+  }
+  function render() {
+    if (!src) return;
+    $('busy').hidden = false;
+    requestAnimationFrame(() => setTimeout(() => { draw(); showResult(); }, 0));
+  }
+  let viewUrl = '';
+  function showResult() {
+    out.toBlob(b => {
+      if (viewUrl) URL.revokeObjectURL(viewUrl);
+      viewUrl = URL.createObjectURL(b);
+      $('view').src = viewUrl;
+      $('busy').hidden = true;
+    }, 'image/png');
+  }
+
+  function draw() {
+    const P = +$('power').value / 100, ANG = +$('angle').value, HUE = +$('hue').value;
+    const on = id => $(id).checked;
+    const w = src.width, h = src.height, diag = Math.hypot(w, h);
+    out.width = w; out.height = h;
+    const ctx = out.getContext('2d');
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    ctx.drawImage(src, 0, 0);
+    if (on('fxPop') && P > 0) {
+      const id = ctx.getImageData(0, 0, w, h), d = id.data;
+      const sat = 1 + 1.4 * P, con = 1 + 0.45 * P;
+      for (let i = 0; i < d.length; i += 4) {
+        let r = d[i], g = d[i+1], b = d[i+2];
+        const l = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = l + (r - l) * sat; g = l + (g - l) * sat; b = l + (b - l) * sat;
+        d[i]   = (r - 128) * con + 128;
+        d[i+1] = (g - 128) * con + 128;
+        d[i+2] = (b - 128) * con + 128;
+      }
+      ctx.putImageData(id, 0, 0);
+    }
+    const base = mk(w, h); base.getContext('2d').drawImage(out, 0, 0);
+    if (on('fxRainbow') && P > 0) {
+      ctx.globalCompositeOperation = 'color';
+      ctx.globalAlpha = Math.min(1, 0.32 * P);
+      ctx.fillStyle = rainbowGradient(ctx, w, h, ANG, HUE); ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'overlay';
+      ctx.globalAlpha = Math.min(1, 0.45 * P);
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    }
+    if (on('fxEdge') && P > 0) {
+      const bd = base.getContext('2d').getImageData(0, 0, w, h).data;
+      const lum = new Float32Array(w * h);
+      for (let i = 0, j = 0; j < lum.length; i += 4, j++) lum[j] = 0.299 * bd[i] + 0.587 * bd[i+1] + 0.114 * bd[i+2];
+      const e = mk(w, h), ex = e.getContext('2d'), ed = ex.createImageData(w, h), q = ed.data;
+      const grad = mk(w, h), gx = grad.getContext('2d');
+      gx.fillStyle = rainbowGradient(gx, w, h, ANG + 90, HUE + 120); gx.fillRect(0, 0, w, h);
+      const gd = gx.getImageData(0, 0, w, h).data;
+      for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+        const k = y * w + x;
+        const sx = -lum[k-w-1] - 2*lum[k-1] - lum[k+w-1] + lum[k-w+1] + 2*lum[k+1] + lum[k+w+1];
+        const sy = -lum[k-w-1] - 2*lum[k-w] - lum[k-w+1] + lum[k+w-1] + 2*lum[k+w] + lum[k+w+1];
+        let m = Math.hypot(sx, sy) / 360; m = m < 0.12 ? 0 : Math.min(1, (m - 0.12) * 2.2);
+        const o = k * 4;
+        q[o] = gd[o] * m; q[o+1] = gd[o+1] * m; q[o+2] = gd[o+2] * m; q[o+3] = 255;
+      }
+      ex.putImageData(ed, 0, 0);
+      const glow = blur(e, Math.max(4, diag / 180));
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = Math.min(1, 0.9 * P); ctx.drawImage(glow, 0, 0); ctx.drawImage(glow, 0, 0);
+      ctx.globalAlpha = Math.min(1, 0.85 * P); ctx.drawImage(e, 0, 0);
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    }
+    if (on('fxBloom') && P > 0) {
+      const b = mk(w, h), bx = b.getContext('2d'); bx.drawImage(out, 0, 0);
+      const id = bx.getImageData(0, 0, w, h), d = id.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const l = Math.max(d[i], d[i+1], d[i+2]);
+        const m = l < 150 ? 0 : (l - 150) / 105;
+        d[i] *= m; d[i+1] *= m; d[i+2] *= m;
+      }
+      bx.putImageData(id, 0, 0);
+      const g1 = blur(b, Math.max(8, diag / 90)), g2 = blur(b, Math.max(16, diag / 30));
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = Math.min(1, 0.8 * P); ctx.drawImage(g1, 0, 0);
+      ctx.globalAlpha = Math.min(1, 0.7 * P); ctx.drawImage(g2, 0, 0);
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    }
+    if (on('fxRgb') && P > 0) {
+      const id = ctx.getImageData(0, 0, w, h), s = new Uint8ClampedArray(id.data), d = id.data;
+      const off = Math.max(1, Math.round(diag / 260 * P));
+      for (let y = 0; y < h; y++) {
+        const row = y * w;
+        for (let x = 0; x < w; x++) {
+          const o = (row + x) * 4;
+          const xr = Math.min(w - 1, x + off), xb = Math.max(0, x - off);
+          d[o]   = s[(row + xr) * 4];
+          d[o+2] = s[(row + xb) * 4 + 2];
+        }
+      }
+      ctx.putImageData(id, 0, 0);
+    }
+    if (on('fxSpark') && P > 0) {
+      const r = rng(seed);
+      const small = mk(64, Math.max(1, Math.round(64 * h / w))), sx = small.getContext('2d');
+      sx.drawImage(out, 0, 0, small.width, small.height);
+      const sd = sx.getImageData(0, 0, small.width, small.height).data;
+      const cands = [];
+      for (let i = 0; i < sd.length / 4; i++) {
+        const l = 0.299 * sd[i*4] + 0.587 * sd[i*4+1] + 0.114 * sd[i*4+2];
+        if (l > 170) cands.push(i);
+      }
+      const n = Math.round((6 + r() * 6) * Math.min(1.5, P));
+      ctx.globalCompositeOperation = 'lighter';
+      for (let k = 0; k < n; k++) {
+        let x, y;
+        if (cands.length && r() < 0.8) {
+          const i = cands[(r() * cands.length) | 0];
+          x = ((i % small.width) + r()) * w / small.width; y = (((i / small.width) | 0) + r()) * h / small.height;
+        } else { x = r() * w; y = r() * h; }
+        star(ctx, x, y, diag * (0.015 + r() * 0.035) * Math.min(1.3, 0.5 + P / 2), hueAt(x, y, w, h, ANG, HUE));
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    if (on('fxScan') && P > 0) {
+      const step = Math.max(2, Math.round(h / 300));
+      ctx.fillStyle = `rgba(0,0,0,${Math.min(0.5, 0.18 * P)})`;
+      for (let y = 0; y < h; y += step * 2) ctx.fillRect(0, y, w, step);
+      const v = ctx.createRadialGradient(w/2, h/2, Math.min(w, h) * 0.35, w/2, h/2, diag * 0.6);
+      v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, `rgba(0,0,0,${Math.min(0.7, 0.45 * P)})`);
+      ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
+    }
+    if (on('fxFrame') && P > 0) {
+      const t = Math.max(3, Math.round(diag / 160));
+      const g = rainbowGradient(ctx, w, h, ANG, HUE);
+      const f = mk(w, h), fx = f.getContext('2d');
+      fx.strokeStyle = rainbowGradient(fx, w, h, ANG, HUE); fx.lineWidth = t * 1.6;
+      fx.strokeRect(t * 0.8, t * 0.8, w - t * 1.6, h - t * 1.6);
+      ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, P);
+      ctx.drawImage(blur(f, Math.max(6, t * 3)), 0, 0); ctx.drawImage(blur(f, Math.max(6, t * 3)), 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = g; ctx.lineWidth = t; ctx.strokeRect(t / 2, t / 2, w - t, h - t);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function star(ctx, x, y, s, hue) {
+    const core = ctx.createRadialGradient(x, y, 0, x, y, s * 0.5);
+    core.addColorStop(0, 'rgba(255,255,255,0.95)');
+    core.addColorStop(0.25, `hsla(${hue},100%,70%,0.6)`);
+    core.addColorStop(1, `hsla(${hue},100%,60%,0)`);
+    ctx.fillStyle = core; ctx.beginPath(); ctx.arc(x, y, s * 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.translate(x, y);
+    for (let k = 0; k < 4; k++) {
+      if (k) ctx.rotate(Math.PI / 4);
+      const len = k % 2 ? s * 0.6 : s * 1.4, th = Math.max(1, s * (k % 2 ? 0.03 : 0.05));
+      const g = ctx.createLinearGradient(-len, 0, len, 0);
+      g.addColorStop(0, `hsla(${hue},100%,70%,0)`); g.addColorStop(0.5, 'rgba(255,255,255,0.95)'); g.addColorStop(1, `hsla(${hue},100%,70%,0)`);
+      ctx.fillStyle = g; ctx.fillRect(-len, -th, len * 2, th * 2);
+    }
+    ctx.restore();
+  }
+  const framed = window.self !== window.top;
+  if (framed) $('save').hidden = true;
+  $('copy').addEventListener('click', () => {
+    if (!navigator.clipboard || !window.ClipboardItem) { toast('この環境ではコピーできません。画像を右クリックで保存してください'); return; }
+    const p = new Promise(res => out.toBlob(res, 'image/png'));
+    navigator.clipboard.write([new ClipboardItem({ 'image/png': p })])
+      .then(() => toast('クリップボードにコピーしました'))
+      .catch(() => toast('コピーできませんでした。画像を右クリックで保存してください'));
+  });
+  $('save').addEventListener('click', () => {
+    out.toBlob(b => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b); a.download = 'gaming.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      toast('PNGを保存したよ！');
+    }, 'image/png');
+  });
+  let tt = 0;
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2400); }
+  function sample() {
+    const w = 960, h = 600, c = mk(w, h), x = c.getContext('2d'), r = rng(42);
+    const sky = x.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, '#1b2440'); sky.addColorStop(0.6, '#55607a'); sky.addColorStop(1, '#2a2a30');
+    x.fillStyle = sky; x.fillRect(0, 0, w, h);
+    x.fillStyle = '#f1efe6'; x.beginPath(); x.arc(760, 120, 46, 0, Math.PI * 2); x.fill();
+    for (let i = 0; i < 18; i++) {
+      const bw = 40 + r() * 70, bh = 120 + r() * 300, bx = i * 56 - 20;
+      x.fillStyle = `rgb(${30 + r() * 30},${32 + r() * 30},${40 + r() * 30})`;
+      x.fillRect(bx, h - bh, bw, bh);
+      for (let yy = h - bh + 12; yy < h - 10; yy += 18) for (let xx = bx + 8; xx < bx + bw - 8; xx += 14)
+        if (r() < 0.45) { x.fillStyle = r() < 0.7 ? '#f6dfa0' : '#cfe3ff'; x.fillRect(xx, yy, 6, 9); }
+    }
+    x.fillStyle = '#e8e6df'; x.font = '64px "DotGothic16", monospace';
+    x.textAlign = 'center'; x.fillText('Ctrl+V で画像を貼り付け', w / 2, h / 2 - 40);
+    return c;
+  }
+  let hits = 1;
+  try { hits = (+localStorage.getItem('gaming-hits') || 0) + 1; localStorage.setItem('gaming-hits', hits); } catch (e) {}
+  $('hits').innerHTML = String(7210 + hits).padStart(6, '0').split('').map(d => '<b>' + d + '</b>').join('');
+
+  syncLabels();
+  src = sample();
+  render();
+  if (document.fonts) document.fonts.ready.then(() => { if (!userImage) { src = sample(); render(); } });
+})();
+</script>
+</body>
+</html>

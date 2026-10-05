@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>集中線メーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap">
+<style>
+:root {
+  --bg: #000033;
+  --star: #ffffff;
+  --fg: #ffffff;
+  --yellow: #ffff00;
+  --red: #ff0000;
+  --lime: #00ff00;
+  --cyan: #00ffff;
+  --magenta: #ff00ff;
+  --silver: #c0c0c0;
+  --bezel: #3a3a3a;
+  --font-dot: "DotGothic16", "MS Gothic", "Osaka", monospace;
+  --font-pixel: "Press Start 2P", "DotGothic16", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body {
+  color: var(--fg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1px 1px at 10px 20px, var(--star), transparent),
+    radial-gradient(1px 1px at 70px 90px, var(--star), transparent),
+    radial-gradient(2px 2px at 130px 40px, var(--yellow), transparent),
+    radial-gradient(1px 1px at 160px 140px, var(--star), transparent),
+    radial-gradient(1px 1px at 40px 160px, var(--cyan), transparent),
+    radial-gradient(2px 2px at 100px 120px, var(--star), transparent);
+  background-size: 180px 180px;
+}
+body { margin: 0; font-family: var(--font-dot); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 12px 16px 40px; display: grid; gap: 16px; }
+.marquee { overflow: hidden; white-space: nowrap; background: var(--red); color: var(--yellow); border: 3px ridge var(--yellow); font-size: 15px; padding: 2px 0; }
+.marquee span { display: inline-block; padding-left: 100%; animation: scroll 16s linear infinite; }
+@keyframes scroll { to { transform: translateX(-100%); } }
+
+header { text-align: center; display: grid; gap: 6px; justify-items: center; }
+h1 {
+  margin: 0; font-family: var(--font-dot); font-weight: 400;
+  font-size: clamp(30px, 7vw, 60px); line-height: 1.15; color: var(--yellow);
+  text-shadow: 3px 3px 0 var(--red), 6px 6px 0 var(--magenta), 9px 9px 0 #000;
+  transform: rotate(-2deg); text-wrap: balance;
+}
+.sub { font-family: var(--font-pixel); font-size: 11px; color: var(--cyan); letter-spacing: .1em; }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { visibility: hidden; } }
+.tag { margin: 0; color: var(--lime); font-size: 15px; }
+.new { display: inline-block; background: var(--red); color: var(--yellow); font-family: var(--font-pixel); font-size: 10px; padding: 3px 5px; transform: rotate(-8deg); }
+kbd { font-family: var(--font-pixel); font-size: 10px; background: var(--silver); color: #000; border: 2px outset #fff; padding: 1px 4px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.cabinet { min-width: 0; background: var(--bezel); border: 6px outset #777; border-radius: 22px; padding: 18px 18px 10px; display: grid; gap: 8px; }
+.screen {
+  position: relative; background: #000; border-radius: 26px / 20px; border: 4px inset #222;
+  min-height: 260px; display: grid; place-items: center; overflow: hidden; padding: 6px;
+  box-shadow: inset 0 0 40px rgba(0,255,255,.25);
+}
+#out { display: none; }
+#view { display: block; max-width: 100%; height: auto; max-height: 70vh; -webkit-touch-callout: default; user-select: auto; }
+.cabinet.drag .screen::after {
+  content: "ここに ドロップ!!"; position: absolute; inset: 0; display: grid; place-items: center;
+  background: rgba(0,0,51,.85); font-size: 32px; color: var(--yellow); text-shadow: 3px 3px 0 var(--red);
+}
+.badge {
+  position: absolute; top: 10px; left: 14px; pointer-events: none;
+  font-family: var(--font-pixel); font-size: 9px; color: var(--lime); text-shadow: 1px 1px 0 #000;
+}
+.busy { position: absolute; bottom: 10px; right: 14px; pointer-events: none; font-family: var(--font-pixel); font-size: 10px; color: var(--yellow); }
+.cabinet-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-family: var(--font-pixel); font-size: 10px; color: var(--silver); }
+.savehint { text-align: center; color: var(--yellow); font-size: 16px; margin: 0; }
+.savehint b { color: var(--magenta); }
+.panel { background: var(--silver); color: #000; border: 4px outset #fff; padding: 0 0 12px; display: grid; gap: 12px; }
+.titlebar { background: linear-gradient(90deg, #000080, #1084d0); color: #fff; font-weight: 700; padding: 3px 8px; font-size: 14px; display: flex; justify-content: space-between; }
+.titlebar i { font-style: normal; background: var(--silver); color: #000; border: 2px outset #fff; padding: 0 5px; font-size: 11px; line-height: 1.3; }
+.group { display: grid; gap: 8px; padding: 0 12px; }
+fieldset.group { border: 2px groove #fff; margin: 0 12px; padding: 6px 10px 10px; }
+legend { padding: 0 4px; color: #000080; font-weight: 700; }
+.arcade {
+  font: inherit; font-size: 15px; cursor: pointer; color: #fff; text-shadow: 1px 1px 0 #000;
+  border: 3px solid #000; border-radius: 999px; padding: 10px 12px; text-align: center;
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,.35), inset 0 4px 0 rgba(255,255,255,.45), 0 4px 0 #000;
+  background: var(--red);
+}
+.arcade:active { transform: translateY(3px); box-shadow: inset 0 -3px 0 rgba(0,0,0,.35), 0 1px 0 #000; }
+.arcade:focus-visible, input:focus-visible { outline: 3px dashed var(--magenta); outline-offset: 2px; }
+.arcade.blue { background: #0044ff; }
+.arcade.yellow { background: #ffcc00; color: #000; text-shadow: none; }
+.arcade.green { background: #00aa00; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+input[type=file] { display: none; }
+
+.slider { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; align-items: center; }
+.slider span.v { font-family: var(--font-pixel); font-size: 10px; color: #000; background: var(--lime); border: 2px inset #fff; padding: 2px 4px; font-variant-numeric: tabular-nums; }
+input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
+
+.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+.toggles label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; user-select: none; }
+.toggles input, .toggles input[type=radio] { margin: 0; width: 15px; height: 15px; accent-color: #000080; }
+
+.note { font-size: 13px; margin: 0; color: #000; }
+.counter { text-align: center; font-size: 14px; color: var(--fg); display: grid; gap: 6px; justify-items: center; }
+.digits { display: inline-flex; gap: 2px; }
+.digits b { font-family: var(--font-pixel); font-size: 14px; background: #000; color: var(--lime); border: 2px inset #666; padding: 4px 3px; font-weight: 400; }
+.counter small { color: var(--silver); font-size: 12px; }
+.counter .koji { background: repeating-linear-gradient(45deg, var(--yellow) 0 12px, #000 12px 24px); color: #000; padding: 4px 10px; }
+.counter .koji span { background: var(--yellow); padding: 0 6px; }
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--yellow); color: #000; border: 3px outset #fff; padding: 6px 14px; font-size: 15px; max-width: calc(100% - 32px);
+}
+@media (prefers-reduced-motion: reduce) { .marquee span, .blink { animation: none; } .marquee span { padding-left: 0; } }
+.text-in { font: inherit; font-size: 15px; width: 100%; padding: 3px 6px; border: 2px inset #fff; background: #fff; color: #000; }
+#view { cursor: crosshair; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="marquee"><span>★☆★ ようこそ！集中線メーカーへ！！ ★☆★ 画像を貼り付けるだけで主人公になれるよ ★☆★ ドーン！！ ★☆★ 相互リンク募集中 ★☆★ 荒らしはやめてね ★☆★</span></div>
+
+  <header>
+    <h1>集中線メーカー</h1>
+    <div class="sub blink">PUSH START BUTTON</div>
+    <p class="tag"><span class="new">NEW!</span> 画像を <kbd>Ctrl</kbd>+<kbd>V</kbd> で貼り付けるか、ファイルを選ぶかドロップしてね！</p>
+  </header>
+
+  <div class="main">
+    <div class="cabinet" id="stage">
+      <div class="screen">
+        <canvas id="out" width="960" height="600"></canvas>
+        <img id="view" alt="集中線を入れた画像">
+        <span class="badge" id="badge">サンプル画像</span>
+        <span class="busy blink" id="busy" hidden>NOW LOADING...</span>
+      </div>
+      <div class="cabinet-foot"><span>1P</span><span>SHUCHUSEN-FIGHTER '97</span><span>2P</span></div>
+      <p class="savehint">画像を<b>クリック</b>したところが中心になるよ！<br>↑ 画像を<b>右クリック</b>（スマホは<b>長押し</b>）で保存できるよ！</p>
+    </div>
+
+    <aside class="panel">
+      <div class="titlebar">集中線設定.exe <i>×</i></div>
+
+      <div class="group">
+        <label class="arcade" for="file">ファイルを選ぶ</label>
+        <input type="file" id="file" accept="image/*">
+        <p class="note">貼り付け（<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>V</kbd>）とドラッグ＆ドロップもOK！</p>
+      </div>
+
+      <fieldset class="group">
+        <legend>チューニング</legend>
+        <div class="slider"><span>線の本数</span><span class="v" id="countV"></span>
+          <input type="range" id="count" min="20" max="400" value="160"></div>
+        <div class="slider"><span>線の太さ</span><span class="v" id="thickV"></span>
+          <input type="range" id="thick" min="5" max="100" value="45"></div>
+        <div class="slider"><span>中心の空き</span><span class="v" id="holeV"></span>
+          <input type="range" id="hole" min="0" max="90" value="45"></div>
+        <div class="slider"><span>ガタガタ度</span><span class="v" id="jitterV"></span>
+          <input type="range" id="jitter" min="0" max="100" value="45"></div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>線の色</legend>
+        <div class="toggles">
+          <label><input type="radio" name="color" value="black" checked>黒</label>
+          <label><input type="radio" name="color" value="white">白</label>
+          <label><input type="radio" name="color" value="rainbow">虹</label>
+          <label><input type="radio" name="color" value="red">赤</label>
+        </div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>エフェクト</legend>
+        <div class="toggles">
+          <label><input type="checkbox" id="fxEdge" checked>フチ取り</label>
+          <label><input type="checkbox" id="fxZoom" checked>ズームブラー</label>
+          <label><input type="checkbox" id="fxFlash">中心フラッシュ</label>
+          <label><input type="checkbox" id="fxTone">トーン</label>
+          <label><input type="checkbox" id="fxText" checked>擬音</label>
+          <label><input type="checkbox" id="fxShake">画面ゆれ</label>
+        </div>
+        <input class="text-in" type="text" id="sfx" value="ドーン！！" maxlength="20" aria-label="擬音の文字">
+      </fieldset>
+
+      <div class="group">
+        <div class="row">
+          <button class="arcade blue" id="copy" type="button">コピー</button>
+          <button class="arcade green" id="save" type="button">PNG保存</button>
+        </div>
+        <div class="row">
+          <button class="arcade yellow" id="reroll" type="button">線をふり直す</button>
+          <button class="arcade" id="center" type="button">中心リセット</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="counter">
+    <div>あなたは <span class="digits" id="hits"></span> 人目の主人公です</div>
+    <div class="koji"><span>このページは工事中です</span></div>
+    <small>800×600・フルカラー推奨 ／ リンクフリーです</small>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const out = $('out');
+  const MAX_SIDE = 1600;
+  let src = null;
+  let seed = 7;
+  let timer = 0;
+  let userImage = false;
+  let cxr = 0.5, cyr = 0.5;
+  function loadBlob(blob, name) {
+    if (!blob || !blob.type.startsWith('image/')) { toast('画像ファイルを選んでください'); return; }
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { setSource(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); $('badge').textContent = name || '貼り付けた画像'; };
+    img.onerror = () => { toast('この画像は読み込めませんでした'); URL.revokeObjectURL(url); };
+    img.src = url;
+  }
+  function setSource(img, w, h) {
+    const k = Math.min(1, MAX_SIDE / Math.max(w, h));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    src = c; userImage = true; cxr = 0.5; cyr = 0.5; seed = (Math.random() * 1e9) | 0; render();
+  }
+  $('file').addEventListener('change', e => { const f = e.target.files[0]; if (f) loadBlob(f, f.name); e.target.value = ''; });
+  document.addEventListener('paste', e => {
+    if (e.target && e.target.id === 'sfx') return;
+    const items = e.clipboardData ? [...e.clipboardData.items] : [];
+    const it = items.find(i => i.type.startsWith('image/'));
+    if (it) { e.preventDefault(); loadBlob(it.getAsFile(), '貼り付けた画像'); }
+    else toast('クリップボードに画像がありません');
+  });
+  const stage = $('stage');
+  ['dragenter','dragover'].forEach(t => window.addEventListener(t, e => { e.preventDefault(); stage.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(t => window.addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || e.target === document.documentElement) stage.classList.remove('drag'); }));
+  window.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) loadBlob(f, f.name); });
+  $('view').addEventListener('click', e => {
+    const r = e.currentTarget.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    cxr = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    cyr = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+    render();
+  });
+  $('center').addEventListener('click', () => { cxr = 0.5; cyr = 0.5; render(); });
+  const ids = ['count','thick','hole','jitter','fxEdge','fxZoom','fxFlash','fxTone','fxText','fxShake','sfx'];
+  ids.forEach(id => $(id).addEventListener('input', schedule));
+  document.querySelectorAll('input[name=color]').forEach(el => el.addEventListener('input', schedule));
+  $('reroll').addEventListener('click', () => { seed = (Math.random() * 1e9) | 0; render(); });
+  function schedule() { syncLabels(); clearTimeout(timer); timer = setTimeout(render, 60); }
+  function syncLabels() {
+    $('countV').textContent = $('count').value + '本';
+    $('thickV').textContent = $('thick').value;
+    $('holeV').textContent = $('hole').value + '%';
+    $('jitterV').textContent = $('jitter').value + '%';
+  }
+  function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  function rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function render() {
+    if (!src) return;
+    $('busy').hidden = false;
+    requestAnimationFrame(() => setTimeout(() => { draw(); showResult(); }, 0));
+  }
+  let viewUrl = '';
+  function showResult() {
+    out.toBlob(b => {
+      if (viewUrl) URL.revokeObjectURL(viewUrl);
+      viewUrl = URL.createObjectURL(b);
+      $('view').src = viewUrl;
+      $('busy').hidden = true;
+    }, 'image/png');
+  }
+
+  function draw() {
+    const N = +$('count').value, T = +$('thick').value / 100, H = +$('hole').value / 100, J = +$('jitter').value / 100;
+    const mode = document.querySelector('input[name=color]:checked').value;
+    const on = id => $(id).checked;
+    const w = src.width, h = src.height, diag = Math.hypot(w, h);
+    const cx = cxr * w, cy = cyr * h;
+    out.width = w; out.height = h;
+    const ctx = out.getContext('2d');
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    const r = rng(seed);
+
+    if (on('fxShake')) {
+      const s = diag / 150;
+      ctx.globalAlpha = 0.5; ctx.drawImage(src, -s, s * 0.4);
+      ctx.globalAlpha = 0.5; ctx.drawImage(src, s, -s * 0.4);
+      ctx.globalAlpha = 1;
+    } else ctx.drawImage(src, 0, 0);
+
+    const rx = Math.max(1, H * w * 0.5), ry = Math.max(1, H * h * 0.5);
+
+    if (on('fxZoom')) {
+      const z = mk(w, h), zx = z.getContext('2d');
+      zx.drawImage(out, 0, 0);
+      const steps = 12;
+      for (let i = 1; i <= steps; i++) {
+        const k = 1 + 0.12 * i / steps;
+        zx.globalAlpha = 1 / (i + 1);
+        zx.drawImage(out, cx - cx * k, cy - cy * k, w * k, h * k);
+      }
+      const m = mk(w, h), mx = m.getContext('2d');
+      const R = Math.max(rx, ry);
+      mx.save(); mx.translate(cx, cy); mx.scale(rx / R, ry / R);
+      const g = mx.createRadialGradient(0, 0, R * 0.7, 0, 0, R * 1.6 + diag * 0.05);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,1)');
+      mx.fillStyle = g; mx.fillRect(-diag * 4, -diag * 4, diag * 8, diag * 8);
+      mx.restore();
+      mx.globalCompositeOperation = 'source-in'; mx.drawImage(z, 0, 0);
+      ctx.drawImage(m, 0, 0);
+    }
+
+    if (on('fxTone')) {
+      const t = mk(w, h), tx = t.getContext('2d');
+      const step = Math.max(4, Math.round(diag / 160));
+      tx.fillStyle = 'rgba(0,0,0,0.55)';
+      for (let y = 0; y < h + step; y += step) for (let x = ((y / step) & 1) * step / 2; x < w + step; x += step) {
+        tx.beginPath(); tx.arc(x, y, step * 0.28, 0, Math.PI * 2); tx.fill();
+      }
+      tx.globalCompositeOperation = 'destination-in';
+      tx.save(); tx.translate(cx, cy); const R = Math.max(rx, ry, 1); tx.scale(rx / R, ry / R);
+      const g = tx.createRadialGradient(0, 0, R * 0.9, 0, 0, R * 1.8 + diag * 0.1);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,1)');
+      tx.fillStyle = g; tx.fillRect(-diag * 4, -diag * 4, diag * 8, diag * 8); tx.restore();
+      ctx.drawImage(t, 0, 0);
+    }
+
+    if (on('fxFlash')) {
+      ctx.save(); ctx.translate(cx, cy); const R = Math.max(rx, ry, diag * 0.08); ctx.scale(Math.max(rx, 1) / R + 0.3, Math.max(ry, 1) / R + 0.3);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R * 1.2);
+      g.addColorStop(0, 'rgba(255,255,255,0.9)'); g.addColorStop(0.5, 'rgba(255,255,230,0.45)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = g;
+      ctx.fillRect(-diag * 4, -diag * 4, diag * 8, diag * 8); ctx.restore();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    const far = diag * 2;
+    const lines = [];
+    for (let i = 0; i < N; i++) {
+      const a = (i + (r() - 0.5) * 0.9) / N * Math.PI * 2;
+      const reach = 1 + J * (r() * 1.4 - 0.2) + (r() < 0.12 * J ? r() * J * 1.5 : 0);
+      const tipX = cx + Math.cos(a) * rx * reach, tipY = cy + Math.sin(a) * ry * reach;
+      const half = (Math.PI * 2 / N) * T * 0.55 * (0.25 + r() * 1.5);
+      lines.push({ a, tipX, tipY, half });
+    }
+    const path = L => {
+      ctx.beginPath();
+      ctx.moveTo(L.tipX, L.tipY);
+      ctx.lineTo(cx + Math.cos(L.a - L.half) * far, cy + Math.sin(L.a - L.half) * far);
+      ctx.lineTo(cx + Math.cos(L.a + L.half) * far, cy + Math.sin(L.a + L.half) * far);
+      ctx.closePath();
+    };
+    const fillFor = L => {
+      if (mode === 'white') return '#fff';
+      if (mode === 'red') return '#e00010';
+      if (mode === 'rainbow') return `hsl(${(L.a * 180 / Math.PI + 360) % 360},100%,55%)`;
+      return '#000';
+    };
+    if (on('fxEdge')) {
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = Math.max(2, diag / 350);
+      ctx.strokeStyle = mode === 'white' ? '#000' : '#fff';
+      for (const L of lines) { path(L); ctx.stroke(); }
+    }
+    for (const L of lines) { ctx.fillStyle = fillFor(L); path(L); ctx.fill(); }
+    if (mode === 'rainbow') {
+      ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.25;
+      for (const L of lines) { ctx.fillStyle = fillFor(L); path(L); ctx.fill(); }
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    }
+
+    const word = $('sfx').value.trim();
+    if (on('fxText') && word) {
+      const size = Math.min(w, h) * 0.16;
+      ctx.save();
+      ctx.font = `${size}px "DotGothic16", "MS Gothic", sans-serif`;
+      const tw = ctx.measureText(word).width;
+      const fit = Math.min(1, (w * 0.8) / tw);
+      const px = cxr > 0.5 ? w * 0.06 + tw * fit / 2 : w * 0.94 - tw * fit / 2;
+      const py = cyr > 0.5 ? h * 0.08 + size * fit * 0.5 : h * 0.92 - size * fit * 0.3;
+      ctx.translate(px, py); ctx.rotate(-0.12); ctx.scale(fit, fit);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = size * 0.22; ctx.strokeStyle = '#000'; ctx.strokeText(word, size * 0.06, size * 0.06);
+      ctx.lineWidth = size * 0.14; ctx.strokeStyle = '#fff'; ctx.strokeText(word, 0, 0);
+      const g = ctx.createLinearGradient(0, -size / 2, 0, size / 2);
+      g.addColorStop(0, '#ffff00'); g.addColorStop(1, '#ff3300');
+      ctx.lineWidth = size * 0.05; ctx.strokeStyle = '#000'; ctx.strokeText(word, 0, 0);
+      ctx.fillStyle = g; ctx.fillText(word, 0, 0);
+      ctx.restore();
+    }
+  }
+
+  const framed = window.self !== window.top;
+  if (framed) $('save').hidden = true;
+  $('copy').addEventListener('click', () => {
+    if (!navigator.clipboard || !window.ClipboardItem) { toast('この環境ではコピーできません。画像を右クリックで保存してください'); return; }
+    const p = new Promise(res => out.toBlob(res, 'image/png'));
+    navigator.clipboard.write([new ClipboardItem({ 'image/png': p })])
+      .then(() => toast('クリップボードにコピーしました'))
+      .catch(() => toast('コピーできませんでした。画像を右クリックで保存してください'));
+  });
+  $('save').addEventListener('click', () => {
+    out.toBlob(b => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b); a.download = 'shuchusen.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      toast('PNGを保存したよ！');
+    }, 'image/png');
+  });
+  let tt = 0;
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2400); }
+  function sample() {
+    const w = 960, h = 600, c = mk(w, h), x = c.getContext('2d'), r = rng(42);
+    const bg = x.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, '#9fd3ff'); bg.addColorStop(1, '#f4f1e4');
+    x.fillStyle = bg; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 6; i++) {
+      x.fillStyle = 'rgba(255,255,255,0.8)';
+      const ex = r() * w, ey = r() * h * 0.5;
+      x.beginPath(); x.ellipse(ex, ey, 60 + r() * 60, 20 + r() * 14, 0, 0, Math.PI * 2); x.fill();
+    }
+    x.fillStyle = '#ffd9b3'; x.strokeStyle = '#222'; x.lineWidth = 6;
+    x.beginPath(); x.arc(w / 2, h / 2, 110, 0, Math.PI * 2); x.fill(); x.stroke();
+    x.fillStyle = '#222';
+    x.beginPath(); x.ellipse(w / 2 - 40, h / 2 - 20, 12, 22, 0, 0, Math.PI * 2); x.fill();
+    x.beginPath(); x.ellipse(w / 2 + 40, h / 2 - 20, 12, 22, 0, 0, Math.PI * 2); x.fill();
+    x.beginPath(); x.ellipse(w / 2, h / 2 + 50, 26, 30, 0, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#333'; x.font = '44px "DotGothic16", monospace';
+    x.textAlign = 'center'; x.fillText('Ctrl+V で画像を貼り付け', w / 2, h - 34);
+    return c;
+  }
+  let hits = 1;
+  try { hits = (+localStorage.getItem('shuchusen-hits') || 0) + 1; localStorage.setItem('shuchusen-hits', hits); } catch (e) {}
+  $('hits').innerHTML = String(3150 + hits).padStart(6, '0').split('').map(d => '<b>' + d + '</b>').join('');
+
+  syncLabels();
+  src = sample();
+  render();
+  if (document.fonts) document.fonts.ready.then(() => { if (!userImage) { src = sample(); render(); } else render(); });
+})();
+</script>
+</body>
+</html>

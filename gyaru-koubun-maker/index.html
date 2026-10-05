@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ギャル構文メーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap">
+<style>
+:root {
+  --bg: #000033;
+  --star: #ffffff;
+  --fg: #ffffff;
+  --yellow: #ffff00;
+  --red: #ff0000;
+  --lime: #00ff00;
+  --cyan: #00ffff;
+  --magenta: #ff00ff;
+  --pink: #ff99dd;
+  --silver: #c0c0c0;
+  --bezel: #3a3a3a;
+  --font-dot: "DotGothic16", "MS Gothic", "Osaka", monospace;
+  --font-pixel: "Press Start 2P", "DotGothic16", monospace;
+  --font-msg: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body {
+  color: var(--fg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1px 1px at 10px 20px, var(--star), transparent),
+    radial-gradient(1px 1px at 70px 90px, var(--star), transparent),
+    radial-gradient(2px 2px at 130px 40px, var(--pink), transparent),
+    radial-gradient(1px 1px at 160px 140px, var(--star), transparent),
+    radial-gradient(1px 1px at 40px 160px, var(--cyan), transparent),
+    radial-gradient(2px 2px at 100px 120px, var(--star), transparent);
+  background-size: 180px 180px;
+}
+body { margin: 0; font-family: var(--font-dot); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 12px 16px 40px; display: grid; gap: 16px; }
+.marquee { overflow: hidden; white-space: nowrap; background: var(--magenta); color: var(--yellow); border: 3px ridge var(--yellow); font-size: 15px; padding: 2px 0; }
+.marquee span { display: inline-block; padding-left: 100%; animation: scroll 18s linear infinite; }
+@keyframes scroll { to { transform: translateX(-100%); } }
+
+header { text-align: center; display: grid; gap: 6px; justify-items: center; }
+h1 {
+  margin: 0; font-family: var(--font-dot); font-weight: 400;
+  font-size: clamp(28px, 7vw, 58px); line-height: 1.15; color: var(--pink);
+  text-shadow: 3px 3px 0 var(--yellow), 6px 6px 0 var(--cyan), 9px 9px 0 #000;
+  transform: rotate(-2deg); text-wrap: balance;
+}
+.sub { font-family: var(--font-pixel); font-size: 11px; color: var(--cyan); letter-spacing: .1em; }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { visibility: hidden; } }
+.tag { margin: 0; color: var(--lime); font-size: 15px; }
+.new { display: inline-block; background: var(--red); color: var(--yellow); font-family: var(--font-pixel); font-size: 10px; padding: 3px 5px; transform: rotate(-8deg); }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } .panel { order: -1; } .actions { grid-template-columns: 1fr 1fr; } .cabinet { padding: 12px 12px 8px; } }
+.cabinet { min-width: 0; background: var(--bezel); border: 6px outset #777; border-radius: 22px; padding: 18px 18px 10px; display: grid; gap: 10px; }
+.screen {
+  position: relative; background: #000; border-radius: 26px / 20px; border: 4px inset #222;
+  min-height: 260px; overflow: hidden; padding: 34px 14px 16px;
+  box-shadow: inset 0 0 40px rgba(255,0,255,.28);
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px);
+}
+.cabinet.drag .screen::after {
+  content: "ここに ドロップ!!"; position: absolute; inset: 0; display: grid; place-items: center;
+  background: rgba(0,0,51,.85); font-size: 32px; color: var(--yellow); text-shadow: 3px 3px 0 var(--magenta);
+}
+.badge {
+  position: absolute; top: 10px; left: 14px; pointer-events: none;
+  font-family: var(--font-pixel); font-size: 9px; color: var(--pink); text-shadow: 1px 1px 0 #000;
+}
+.chat { display: flex; gap: 10px; align-items: flex-start; }
+.avatar {
+  flex: none; width: 52px; height: 52px; border-radius: 50%; background: #ffb3e6; border: 3px solid #fff;
+  display: grid; place-items: center; font-size: 30px; line-height: 1;
+}
+.bubble-col { min-width: 0; flex: 1; display: grid; gap: 2px; }
+.who { font-size: 12px; color: var(--silver); }
+.bubble {
+  position: relative; background: #ffc4e8; color: #000; border-radius: 18px; padding: 12px 14px;
+  font-family: var(--font-msg); font-size: 16px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere;
+  user-select: all; -webkit-user-select: all; min-height: 3em;
+}
+.bubble::before { content: ""; position: absolute; left: -8px; top: 14px; border: 8px solid transparent; border-right-color: #ffc4e8; border-left: 0; }
+.stamp { text-align: right; font-size: 11px; color: var(--silver); font-family: var(--font-pixel); }
+.cabinet-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-family: var(--font-pixel); font-size: 10px; color: var(--silver); }
+.savehint { text-align: center; color: var(--yellow); font-size: 16px; margin: 0; }
+.savehint b { color: var(--pink); }
+.actions { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.panel { background: var(--silver); color: #000; border: 4px outset #fff; padding: 0 0 12px; display: grid; gap: 12px; }
+.titlebar { background: linear-gradient(90deg, #800080, #ff4fbf); color: #fff; font-weight: 700; padding: 3px 8px; font-size: 14px; display: flex; justify-content: space-between; }
+.titlebar i { font-style: normal; background: var(--silver); color: #000; border: 2px outset #fff; padding: 0 5px; font-size: 11px; line-height: 1.3; }
+.group { display: grid; gap: 8px; padding: 0 12px; }
+fieldset.group { border: 2px groove #fff; margin: 0 12px; padding: 6px 10px 10px; }
+legend { padding: 0 4px; color: #800080; font-weight: 700; }
+.arcade {
+  font: inherit; font-size: 15px; cursor: pointer; color: #fff; text-shadow: 1px 1px 0 #000;
+  border: 3px solid #000; border-radius: 999px; padding: 10px 12px; text-align: center;
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,.35), inset 0 4px 0 rgba(255,255,255,.45), 0 4px 0 #000;
+  background: #ff2fa8;
+}
+.arcade:active { transform: translateY(3px); box-shadow: inset 0 -3px 0 rgba(0,0,0,.35), 0 1px 0 #000; }
+.arcade:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px dashed var(--magenta); outline-offset: 2px; }
+.arcade.blue { background: #0044ff; }
+.arcade.yellow { background: #ffcc00; color: #000; text-shadow: none; }
+.arcade.green { background: #00aa00; }
+
+textarea.src {
+  font-family: var(--font-msg); font-size: 15px; line-height: 1.6; width: 100%; min-height: 150px; resize: vertical;
+  padding: 6px 8px; border: 2px inset #fff; background: #fff; color: #000;
+}
+.text-in, select { font: inherit; font-size: 15px; width: 100%; padding: 3px 6px; border: 2px inset #fff; background: #fff; color: #000; }
+.field { display: grid; gap: 2px; font-size: 14px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.slider { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; align-items: center; }
+.slider span.v { font-family: var(--font-dot); font-size: 13px; line-height: 1.2; color: #000; background: var(--pink); border: 2px inset #fff; padding: 2px 6px; }
+input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #c0008a; }
+
+.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+.toggles label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; user-select: none; }
+.toggles input { margin: 0; width: 15px; height: 15px; accent-color: #c0008a; }
+
+.counter { text-align: center; font-size: 14px; color: var(--fg); display: grid; gap: 6px; justify-items: center; }
+.digits { display: inline-flex; gap: 2px; }
+.digits b { font-family: var(--font-pixel); font-size: 14px; background: #000; color: var(--pink); border: 2px inset #666; padding: 4px 3px; font-weight: 400; }
+.counter small { color: var(--silver); font-size: 12px; }
+.counter .koji { background: repeating-linear-gradient(45deg, var(--yellow) 0 12px, #000 12px 24px); color: #000; padding: 4px 10px; }
+.counter .koji span { background: var(--yellow); padding: 0 6px; }
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--pink); color: #000; border: 3px outset #fff; padding: 6px 14px; font-size: 15px; max-width: calc(100% - 32px);
+}
+@media (prefers-reduced-motion: reduce) { .marquee span, .blink { animation: none; } .marquee span { padding-left: 0; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="marquee"><span>★☆★ ようこそ！ギャル構文メーカーへ💖 ★☆★ ふつうの文章が、ギャルのLINEに大変身🫶✨ ★☆★ ぁりがとぅ、ズッ友だょ ★☆★ 相互リンク募集中 ★☆★ 荒らしはやめてね🙏 ★☆★</span></div>
+
+  <header>
+    <h1>ギャル構文メーカー</h1>
+    <div class="sub blink">INSERT COIN</div>
+    <p class="tag"><span class="new">NEW!</span> 文章を書くか、貼り付けるか、テキストファイルをドロップしてね！</p>
+  </header>
+
+  <div class="main">
+    <div class="cabinet" id="stage">
+      <div class="screen">
+        <span class="badge" id="badge">LV.3 KOGAL</span>
+        <div class="chat">
+          <div class="avatar" aria-hidden="true">💅</div>
+          <div class="bubble-col">
+            <div class="who" id="who">ギャル</div>
+            <div class="bubble" id="out" aria-live="polite"></div>
+            <div class="stamp" id="stamp">既読 12:34</div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="arcade" id="copy" type="button">📋 コピーする</button>
+        <button class="arcade blue" id="reroll" type="button">🎲 別パターン</button>
+      </div>
+      <div class="cabinet-foot"><span>1P</span><span>GAL-KOUBUN '99</span><span>2P</span></div>
+      <p class="savehint">吹き出しを<b>タップ</b>すると全部選択されるよ！<br>そのままLINEやXに<b>貼り付け</b>てね💖</p>
+    </div>
+
+    <aside class="panel">
+      <div class="titlebar">ギャル化.exe <i>×</i></div>
+
+      <div class="group">
+        <label class="field">元の文章
+          <textarea class="src" id="src" spellcheck="false">今日はとても楽しかったです。
+明日は友達とカラオケに行きます。
+あなたは何してるの？
+おやすみなさい。</textarea>
+        </label>
+        <div class="row">
+          <label class="arcade yellow" for="file">📂 ファイル</label>
+          <button class="arcade green" id="clear" type="button">🗑️ 消す</button>
+        </div>
+        <input type="file" id="file" accept=".txt,text/plain" hidden>
+      </div>
+
+      <fieldset class="group">
+        <legend>ギャル設定</legend>
+        <div class="slider">
+          <label for="level">ギャル度</label><span class="v" id="levelV">LV.3</span>
+          <input type="range" id="level" min="1" max="5" step="1" value="3">
+        </div>
+        <div class="slider">
+          <label for="moji">ギャル文字</label><span class="v" id="mojiV">ちょい</span>
+          <input type="range" id="moji" min="0" max="3" step="1" value="1">
+        </div>
+        <div class="field-row">
+          <label class="field">相手の名前
+            <input class="text-in" id="name" type="text" value="ゆみ" maxlength="20">
+          </label>
+          <label class="field">呼び方
+            <select id="nick">
+              <option value="ち" selected>〇〇ち</option>
+              <option value="っち">〇〇っち</option>
+              <option value="ぴ">〇〇ぴ</option>
+              <option value="たそ">〇〇たそ</option>
+              <option value="ちゃん">〇〇ちゃん</option>
+            </select>
+          </label>
+        </div>
+        <label class="field">一人称
+          <select id="me">
+            <option value="うち" selected>うち</option>
+            <option value="あーし">あーし</option>
+            <option value="あたし">あたし</option>
+            <option value="ウチら">ウチら</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>オプション</legend>
+        <div class="toggles">
+          <label><input type="checkbox" id="fxEmoji" checked>絵文字</label>
+          <label><input type="checkbox" id="fxKao" checked>顔文字</label>
+          <label><input type="checkbox" id="fxSlang" checked>ギャル語</label>
+          <label><input type="checkbox" id="fxNobashi" checked>のばし〜</label>
+          <label><input type="checkbox" id="fxWarai" checked>草・わら</label>
+          <label><input type="checkbox" id="fxHeart" checked>ハート♡</label>
+          <label><input type="checkbox" id="fxHello" checked>あいさつ</label>
+          <label><input type="checkbox" id="fxBye" checked>締めの一言</label>
+          <label><input type="checkbox" id="fxGap">改行多め</label>
+        </div>
+      </fieldset>
+    </aside>
+  </div>
+
+  <div class="counter">
+    <div>あなたは <span class="digits" id="hits"></span> 人目のギャルです</div>
+    <div class="koji"><span>このページは工事中です</span></div>
+    <small>800×600・フルカラー推奨 ／ リンクフリーです</small>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let seed = 3;
+  let timer = 0;
+
+  const E = {
+    happy: ['💕','✨','💖','🥰','🫶','💅','🎀','🌈','💯','🔥','😂','🤞','🦄','🍓','👼','💗','🌟','😚'],
+    sad: ['🥺','😭','💧','🫠','😢','💔'],
+    ask: ['❓','⁉️','🤔','❓❓'],
+    bang: ['‼️','❗','❗❗','‼️‼️'],
+  };
+  const KAO = ['(*´∀｀*)','(*ﾉωﾉ)','( ˘ω˘ )','(｡>﹏<｡)','٩(ˊᗜˋ*)و','(っ´ω`c)','(*´艸`*)','ʚ♡ɞ','(๑˃̵ᴗ˂̵)و','(ﾉ≧ڡ≦)','(´；ω；｀)','ヽ(*´∀｀)ノ','(☝ ՞ਊ ՞)☝'];
+  const KAO_SAD = ['(´；ω；｀)','(｡>﹏<｡)','(っ´ω`c)','( ；∀；)'];
+  const SAD = /疲|つかれ|しんど|忙し|辛|つら|悲し|かなし|ぴえん|残念|痛|風邪|大変|雨|ごめん|めんご|寂し|さみし|萎え|最悪|ぱおん/;
+
+  const GREET = [
+    [/^おはよう(ございます)?/, ['おはよ〜','おは','おっはー','おはよーグルト'], ['☀️','🌞']],
+    [/^こんにち[はわ]/, ['やほ〜','やっほ〜','ちわ〜','ちわっす'], ['👋','✨']],
+    [/^こんばん[はわ]/, ['こんばんわ〜','ばんわ〜','ばんわっしょい'], ['🌙','✨']],
+    [/^おやすみ(なさい)?/, ['おやすみ〜','おやす〜','おやすみんみ','おやすみんみーん'], ['😴','💤','🌙']],
+    [/^(お疲れ|おつかれ)(様|さま)?(です|でした)?/, ['おつかれ〜','おつ〜','おつかれちゃん','おつかれサマンサ'], ['🍻','✨']],
+    [/^ありがとう(ございます|ございました)?/, ['ありがと〜','あり〜','あざす','あざまる水産'], ['🙏','💖']],
+    [/^(ごめんなさい|ごめん|すみません|申し訳(ありません|ございません))/, ['ごめん〜','ごめんちゃい','めんご','めんごめんご'], ['🙏','🥺']],
+    [/^(了解(です|しました)?|わかりました|承知(しました|いたしました))/, ['りょうかい〜','りょ','り','おけまる水産'], ['👌','🫡']],
+  ];
+
+  const SLANG = [
+    [/ありがとう(ございます|ございました)?/g, ['ありがと','あり','あざす','あざまる水産']],
+    [/ごめんなさい|すみません|申し訳(ありません|ございません)/g, ['ごめん','ごめんちゃい','めんご','めんごめんご']],
+    [/了解(です|しました)?|わかりました/g, ['りょうかい','りょ','り','おけまる']],
+    [/とても|すごく|凄く|非常に|かなり|めっちゃ/g, ['めっちゃ','まじ','超','ガチ','鬼','激']],
+    [/本当に|ほんとうに|ほんとに|本当/g, ['ほんとに','まじで','ガチで','ガチのマジで']],
+    [/可愛い|かわいい|カワイイ/g, ['かわいい','かわよ','かわちい','きゃわたん','きゃわわ']],
+    [/嬉しい|うれしい/g, ['うれしい','うれぴ','うれしみ','うれぴよ']],
+    [/悲しい|かなしい/g, ['かなしい','かなしみ','ぴえん','ぴえんこえてぱおん']],
+    [/面白い|おもしろい/g, ['おもろい','ウケる','おもろすぎ','腹筋崩壊']],
+    [/美味しい|おいしい/g, ['おいしい','うまうま','うますぎ','優勝']],
+    [/楽しかった/g, ['楽しかった','たのしかった','楽しすぎた','楽しすぎて無理だった']],
+    [/楽しい/g, ['楽しい','たのし〜','楽しすぎ','楽しすぎて無理']],
+    [/すごい|凄い|やばい|ヤバい/g, ['やばい','やばみ','えぐい','やばたにえん','やばたにえんの無理茶漬け']],
+    [/恥ずかしい/g, ['はずい','はずかちい','はずすぎ']],
+    [/気持ち悪い/g, ['キモい','きもちわる','キモすぎ']],
+    [/大丈夫/g, ['だいじょぶ','だいじょぶそ','だいじょぶまる']],
+    [/面倒くさい|めんどくさい/g, ['めんどい','だるい','だるすぎ','だるまる']],
+    [/疲れた/g, ['つかれた','つかれたぁ','しんどみ','しんどすぎ']],
+    [/眠い|ねむい/g, ['ねむい','ねむみ','ねむすぎ','ねむみが深い']],
+    [/寂しい|さみしい|さびしい/g, ['さみしい','さみしみ','さみしすぎ','さみしみが深い']],
+    [/欲しい|ほしい/g, ['ほしい','ほしみ','ほしすぎ','ほしみが深い']],
+    [/友達|友だち|ともだち/g, ['友達','ともだち','ズッ友','ズッ友']],
+    [/写真/g, ['写真','写メ','プリ','盛れた写メ']],
+    [/意味がわからない|意味が分からない|意味不明/g, ['意味わからん','いみふ','いみふすぎ']],
+    [/驚いた|びっくりした/g, ['びっくりした','びびった','ビビり散らかした']],
+    [/怒った|怒っている|怒ってる/g, ['怒った','おこ','激おこ','激おこぷんぷん丸','ムカ着火ファイヤー']],
+    [/最高/g, ['最高','最&高','神','優勝','神すぎ']],
+    [/最悪/g, ['最悪','萎え','萎え〜','ぱおん']],
+    [/わからない|分からない|わかんない/g, ['わかんない','わからん','わからんて','わかりみが浅い']],
+    [/知らない/g, ['知らない','知らん','知らんけど']],
+    [/ちょっと/g, ['ちょっと','ちょっと','ちょっぴり','ちょぴっと']],
+    [/という/g, ['っていう','っていう']],
+    [/すみません/g, ['ごめん']],
+  ];
+
+  const IRR = { す: 'る', した: 'た', せん: 'ない' };
+  const CASUAL = [
+    [/ませんでした/g, 'ません\u0001'],
+    [/ありません/g, 'ない'], [/ございません/g, 'ない'],
+    [/ございます/g, ''],
+    [/でしょうか/g, 'かな'], [/でしょう/g, 'でしょ'],
+    [/ですか$/, 'なの'],
+    [/(て|で)いません/g, '$1ない'],
+    [/(て|で)いました/g, '$1た'],
+    [/(て|で)います/g, '$1る'],
+    [/(て|で)いる/g, '$1る'],
+    [/(て|で)いて/g, '$1て'],
+    [/(て|で)ください/g, '$1〜'],
+    [/ください/g, 'ちょうだい'],
+    [/(て|で)きま(す|した|せん)/g, (m, a, b) => a + { す: 'くる', した: 'きた', せん: 'こない' }[b]],
+    [/できま(す|した|せん)/g, (m, b) => 'でき' + IRR[b]],
+    [/(行|い)きま(す|した|せん)/g, (m, a, b) => a + { す: 'く', した: 'った', せん: 'かない' }[b]],
+    [/来ま(す|した|せん)/g, (m, b) => '来' + IRR[b]],
+    [/(起き|生き|借り|降り|浴び|過ぎ|落ち|信じ|感じ|閉じ|足り|飽き|伸び|見|着|似|居|寝|出|経)ま(す|した|せん)/g, (m, a, b) => a + IRR[b]],
+    [/(話|探|返|貸|消|渡|押|隠|許|直|治|起こ|落と|残|回|戻|移|示|試|指|増|減|写|流|冷|過ご|思い出|乾か|動か|驚か|鳴ら|減ら|揺ら|照ら|出)しま(す|した|せん)/g, (m, a, b) => a + { す: 'す', した: 'した', せん: 'さない' }[b]],
+    [/しま(す|した|せん)/g, (m, b) => 'し' + IRR[b]],
+    [/([えけげせぜてでねへべめれ])ま(す|した|せん)/g, (m, a, b) => a + IRR[b]],
+    [/きま(す|した|せん)/g, (m, b) => ({ す: 'く', した: 'いた', せん: 'かない' })[b]],
+    [/ぎま(す|した|せん)/g, (m, b) => ({ す: 'ぐ', した: 'いだ', せん: 'がない' })[b]],
+    [/ちま(す|した|せん)/g, (m, b) => ({ す: 'つ', した: 'った', せん: 'たない' })[b]],
+    [/りま(す|した|せん)/g, (m, b) => ({ す: 'る', した: 'った', せん: 'らない' })[b]],
+    [/(^|[はがにもとで、])いま(す|した|せん)/g, (m, a, b) => a + { す: 'いる', した: 'いた', せん: 'いない' }[b]],
+    [/いま(す|した|せん)/g, (m, b) => ({ す: 'う', した: 'った', せん: 'わない' })[b]],
+    [/みま(す|した|せん)/g, (m, b) => ({ す: 'む', した: 'んだ', せん: 'まない' })[b]],
+    [/にま(す|した|せん)/g, (m, b) => ({ す: 'ぬ', した: 'んだ', せん: 'なない' })[b]],
+    [/びま(す|した|せん)/g, (m, b) => ({ す: 'ぶ', した: 'んだ', せん: 'ばない' })[b]],
+    [/ない\u0001/g, 'なかった'], [/ません\u0001/g, 'ませんでした'],
+    [/ましょうか/g, 'ましょか'],
+    [/のです/g, 'の'], [/なんです/g, 'なんだ'],
+    [/ですが/g, 'だけど'], [/ですね/g, 'だね'], [/ですよ/g, 'だよ'], [/ですし/g, 'だし'],
+    [/(い|かった|ない|たい)です/g, '$1'],
+    [/でした/g, 'だった'],
+    [/です/g, ''],
+  ];
+
+  const SMALL = { あ: 'ぁ', い: 'ぃ', う: 'ぅ', え: 'ぇ', お: 'ぉ', や: 'ゃ', ゆ: 'ゅ', よ: 'ょ', わ: 'ゎ', か: 'ヵ', け: 'ヶ' };
+  const BIG = {
+    い: ['ﾚヽ'], か: ['カゝ'], が: ['カゞ'], き: ['ｷ', '≠'], く: ['＜'], ぐ: ['＜ﾞ'], け: ['ﾚナ'], げ: ['ﾚナﾞ'], こ: ['⊇'],
+    さ: ['ｻ'], し: ['U', 'ι'], じ: ['Uﾞ'], す: ['ｽ'], せ: ['世'], ぜ: ['世ﾞ'], そ: ['ξ'],
+    た: ['ナニ'], だ: ['ナニﾞ'], ち: ['干'], つ: ['⊃'], て: ['τ'], で: ['τﾞ'], と: ['ー⊂', '├'], ど: ['├ﾞ'],
+    な: ['ナょ'], に: ['ﾆ', '|='], ぬ: ['ﾇ'], ね: ['ﾈ'], の: ['σ'],
+    は: ['ﾚ£'], ば: ['ﾚ£ﾞ'], ひ: ['ﾋ'], ふ: ['､ζ､'], へ: ['∧'], べ: ['∧ﾞ'], ほ: ['ﾚま'], ぼ: ['ﾚまﾞ'],
+    ま: ['ﾏ'], み: ['ﾐ'], む: ['ﾑ'], め: ['×'], も: ['м○', 'ŧ'],
+    ら: ['ﾗ'], り: ['L|', 'ﾘ'], る: ['ﾙ'], れ: ['ﾚ'], ろ: ['ﾛ'], を: ['ヲ'], ん: ['ω', 'ﾝ'],
+  };
+
+  function rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const isNoun = c => /[一-鿿ァ-ヺー々A-Za-z0-9]/.test(c);
+  const isJa = c => /[ぁ-ゖァ-ヺ一-鿿ー々]/.test(c);
+  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  function moji(text, lv, r, keep) {
+    if (!lv) return text;
+    let t = text;
+    keep.forEach(k => { if (k) t = t.replace(new RegExp(esc(k) + 'は', 'g'), k + 'ゎ'); });
+    t = t.replace(/([一-鿿ァ-ヺー々])は(?=[、\s一-鿿ァ-ヺ]|[なとどいもあこそ])/g, '$1ゎ');
+    if (lv >= 2) t = t.replace(/じゃ/g, 'ぢゃ').replace(/を/g, 'ぉ');
+    const pS = [0, 0.3, 0.55, 0.9][lv];
+    const pB = [0, 0, 0.3, 0.85][lv];
+    let out = '';
+    for (const c of t) {
+      if (BIG[c] && r() < pB) { const a = BIG[c]; out += a[Math.floor(r() * a.length)]; continue; }
+      if (SMALL[c] && r() < pS) { out += SMALL[c]; continue; }
+      out += c;
+    }
+    return out;
+  }
+
+  function convert(text, o) {
+    const r = rng(seed);
+    const pick = a => a[Math.floor(r() * a.length)];
+    const chance = p => r() < p;
+    const L = o.level;
+    const pickL = a => {
+      const lo = Math.min(a.length - 1, Math.floor((a.length - 1) * (L - 1) / 6));
+      const hi = Math.max(lo + 1, Math.ceil(a.length * L / 5));
+      return a[lo + Math.floor(r() * (hi - lo))];
+    };
+    const emo = (pool, n) => { if (!o.emoji) return ''; let s = ''; for (let i = 0; i < n; i++) s += pick(pool); return s; };
+    const nk = o.name ? o.name + o.nick : '';
+
+    let t = text.replace(/\r/g, '').trim();
+    if (!t) return '';
+    t = t.replace(/(私|わたし|あたし|僕|ぼく|俺|おれ)(?![いう])/g, o.me);
+    t = t.replace(/あなた|お前|きみ(?=は|が|も|の|に|を)|君(?=は|が|も|の|に|を)/g, nk || 'キミ');
+    t = t.replace(/[…‥]+|\.{3,}|・{3,}/g, '…');
+    t = t.replace(/[（(]笑[)）]|[wｗ]+(?=[\s。！？!?]|$)|草(?=[\s。！？!?]|$)/g, '\u0002');
+
+    const parts = [];
+    t.split(/\n+/).forEach(line => {
+      const re = /[^。！？!?]+[。！？!?]*/g;
+      let m;
+      while ((m = re.exec(line))) { const s = m[0].trim(); if (s) parts.push(s); }
+    });
+
+    const out = [];
+    const extra = new Set();
+    let hello = '';
+    if (o.hello && L >= 2 && !GREET.some(([re]) => re.test(parts[0] || ''))) {
+      const h = new Date().getHours();
+      const g = h < 10 ? pickL(['おはよ〜','おは','おっはー']) : h < 18 ? pickL(['やほ〜','やっほ〜','ちわっす']) : pickL(['ばんわ〜','こんばんわ〜','ばんわっしょい']);
+      hello = (nk ? nk + '〜！' : '') + g + emo(['✨','💖','👋','🫶'], L >= 4 ? 2 : 1);
+    }
+    if (hello) out.push(hello);
+
+    parts.forEach((p, i) => {
+      const ask = /[？?]$/.test(p) || /(か|かな)[。]?$/.test(p.replace(/[！!]+$/, ''));
+      const bang = /[！!]$/.test(p);
+      let s = p.replace(/[。！？!?]+$/, '');
+      const sad = SAD.test(s);
+
+      let greeted = false;
+      let gEmo = '';
+      for (const [re, pool, e] of GREET) {
+        const mm = s.match(re);
+        if (mm) {
+          const rest = s.slice(mm[0].length).replace(/^[、,\s]+/, '');
+          s = (i === 0 && nk && o.hello && !hello ? nk + '〜！' : '') + pickL(pool) + (rest ? '、' + rest : '');
+          gEmo = emo(e, 1);
+          greeted = !rest;
+          break;
+        }
+      }
+
+      if (!greeted) {
+        if (o.slang) {
+          for (const [re, pool] of SLANG) {
+            s = s.replace(re, m => chance(0.35 + L * 0.13) ? pickL(pool) : m);
+          }
+          if (L >= 3) s = s.replace(/([一-鿿ァ-ヺーA-Za-z0-9]+)が(大)?好き(?=$|だ|です)/, (m, a) => chance(0.5) ? a + 'しか勝たん' : m);
+          s = s.replace(/大好き|好き/g, m => !chance(0.3 + L * 0.12) ? m : m === '大好き' ? pickL(['大好き','だいすき','だいしゅき','大好きすぎる']) : pickL(['好き','すき','しゅき','しゅきぴ']));
+        }
+        for (const [re, rep] of CASUAL) s = s.replace(re, rep);
+
+        if (o.slang && L >= 3 && i > 0 && chance(0.08 * L)) s = pickL(['ねぇ、','え、','てか、','まって、','ちょ、','待って待って、']) + s;
+
+        const last = s.slice(-1);
+        if (ask) {
+          const cut = (s.match(/(なの|のか|かな|かい|の|か)$/) || [''])[0];
+          s = s.slice(0, s.length - cut.length);
+          s += isNoun(s.slice(-1)) || cut === 'なの' || /どう$/.test(s) ? pickL(['なの？','？','なの〜？','ってコト！？','系？']) : pickL(['の？','の〜？','？','んだが？','ってコト！？']);
+        } else if (isJa(last) && last !== '〜') {
+          if (/[ねよなわしじ]$/.test(s)) { if (chance(0.5)) s += '〜'; }
+          else if (/い$/.test(s) && !/(ない|たい|ちょうだい|みたい|きれい|せい|ぴ)$/.test(s) && L >= 3 && chance(0.5)) s = s.slice(0, -1) + pickL(['すぎ','すぎる','すぎて無理','みが深い']);
+          else if (/[ただっ]$/.test(s)) s += pickL(['〜','んだけど〜','わ','の〜','ってワケ']);
+          else if (/[るうくすつぬむぶぐいん]$/.test(s)) s += pickL(['〜','よ〜','し','んだけど〜','まである']);
+          else if (isNoun(last)) s += pickL(['だよ〜','じゃん','なんだけど','って感じ〜','でしかない']);
+          else if (chance(0.5)) s += '〜';
+        }
+
+        if (o.nobashi && !ask) {
+          s = s.replace(/([よねただなわ])(〜?)$/, (m, a, b) => chance(0.25 + L * 0.1) ? a + { よ: 'ぉ', ね: 'ぇ', た: 'ぁ', だ: 'ぁ', な: 'ぁ', わ: 'ぁ' }[a] + (b || '〜') : m);
+          if (L >= 4) s = s.replace(/ちょう/g, 'ちょー');
+        }
+      }
+
+      s = s.replace(/\u0002/g, () => o.warai ? pickL(['笑','わら','ｗｗ','草','ｗｗｗｗ']) : '笑');
+      if (bang) s += /〜$/.test(s) ? pickL(['！','！！','！！！']) : pickL(['！','！！','〜！！','！！！']);
+      if (o.warai && !ask && !sad && !/[笑わｗ草]$/.test(s) && chance(0.1 + L * 0.08)) s += pickL(['笑','（笑）','わら','ｗｗ','草','草草の草']);
+      if (o.heart && !sad && chance(0.2 + L * 0.1)) s += pick(['♡','♡','❤︎','♡♡']);
+
+      const n = L === 1 ? 1 : L === 2 ? 1 + (chance(0.4) ? 1 : 0) : Math.min(5, L - 1 + (chance(0.5) ? 1 : 0));
+      s += gEmo;
+      if (ask) s += emo(E.ask, 1) + emo(sad ? E.sad : E.happy, Math.max(0, n - 2));
+      else s += emo(sad ? E.sad : E.happy, Math.max(gEmo ? 0 : 1, n - (gEmo ? 1 : 0)));
+      if (o.kao && chance(0.15 + L * 0.1)) s += pick(sad ? KAO_SAD : KAO);
+
+      out.push(s);
+
+      if (o.slang && L >= 4 && i < parts.length - 1 && chance(0.12 * L - 0.3)) {
+        const w = pick([['それな','👆'],['まじ卍','🔥'],['ぴえん','🥺'],['ぱおん','🐘'],['テンアゲ↑↑','🔥'],['あげぽよ','✨'],['ありよりのあり','💯'],['エモすぎ','🥹'],['ワンチャンある','🤞'],['優勝','🏆']].filter(x => !extra.has(x[0])));
+        if (w) { extra.add(w[0]); out.push(w[0] + emo([w[1]], 1)); }
+      }
+    });
+
+    if (o.bye && L >= 2) {
+      out.push(pickL(['またね〜','じゃね〜','ばいば〜い','バイビー','ばいちゃ','ドロンします','ズッ友だょ']) + emo(['👋','💖','✨','🫶','🎀'], L >= 4 ? 2 : 1) + (o.heart && chance(0.5) ? '♡' : ''));
+    }
+
+    return moji(out.join(o.gap ? '\n\n' : '\n'), o.moji, r, [o.me, nk]);
+  }
+
+  function opts() {
+    return {
+      level: +$('level').value,
+      moji: +$('moji').value,
+      name: $('name').value.trim().replace(/(ちゃん|チャン|さん|ち|っち|ぴ|たそ)$/, ''),
+      nick: $('nick').value,
+      me: $('me').value,
+      emoji: $('fxEmoji').checked,
+      kao: $('fxKao').checked,
+      slang: $('fxSlang').checked,
+      nobashi: $('fxNobashi').checked,
+      warai: $('fxWarai').checked,
+      heart: $('fxHeart').checked,
+      hello: $('fxHello').checked,
+      bye: $('fxBye').checked,
+      gap: $('fxGap').checked,
+    };
+  }
+
+  function render() {
+    const o = opts();
+    $('levelV').textContent = 'LV.' + o.level;
+    $('mojiV').textContent = ['OFF', 'ちょい', 'まあまあ', 'フル'][o.moji];
+    $('badge').textContent = 'LV.' + o.level + ' ' + ['GAL LITE', 'GAL', 'KOGAL', 'GANGURO', 'LEGEND YAMANBA'][o.level - 1];
+    $('who').textContent = o.me === 'ウチら' ? 'ギャルたち' : 'ギャル';
+    const res = convert($('src').value, o);
+    $('out').textContent = res || '（ここにギャルの返事が出るょ💖）';
+    const d = new Date();
+    $('stamp').textContent = '既読 ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  function schedule() { clearTimeout(timer); timer = setTimeout(render, 80); }
+
+  ['src', 'name', 'level', 'moji', 'nick', 'me', 'fxEmoji', 'fxKao', 'fxSlang', 'fxNobashi', 'fxWarai', 'fxHeart', 'fxHello', 'fxBye', 'fxGap']
+    .forEach(id => $(id).addEventListener('input', schedule));
+  ['me', 'nick'].forEach(id => $(id).addEventListener('change', schedule));
+  $('reroll').addEventListener('click', () => { seed = (Math.random() * 1e9) | 0; render(); });
+  $('clear').addEventListener('click', () => { $('src').value = ''; render(); $('src').focus(); });
+
+  function copyText(txt) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(txt);
+    return new Promise((ok, ng) => {
+      const ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy') ? ok() : ng(); } catch (e) { ng(e); }
+      ta.remove();
+    });
+  }
+  $('copy').addEventListener('click', () => {
+    const txt = convert($('src').value, opts());
+    if (!txt) { toast('先に文章を入れてね🥺'); return; }
+    copyText(txt).then(() => toast('コピったょ💖')).catch(() => toast('コピーできませんでした。吹き出しを選択してコピーしてください'));
+  });
+
+  function loadFile(f) {
+    if (!f) return;
+    if (f.type && !f.type.startsWith('text/')) { toast('テキストファイルを選んでください'); return; }
+    f.text().then(t => { $('src').value = t; seed = (Math.random() * 1e9) | 0; render(); }).catch(() => toast('このファイルは読み込めませんでした'));
+  }
+  $('file').addEventListener('change', e => { loadFile(e.target.files[0]); e.target.value = ''; });
+  const stage = $('stage');
+  ['dragenter', 'dragover'].forEach(t => window.addEventListener(t, e => { e.preventDefault(); stage.classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach(t => window.addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || e.target === document.documentElement) stage.classList.remove('drag'); }));
+  window.addEventListener('drop', e => {
+    if (!e.dataTransfer) return;
+    const f = e.dataTransfer.files[0];
+    if (f) { loadFile(f); return; }
+    const t = e.dataTransfer.getData('text/plain');
+    if (t) { $('src').value = t; seed = (Math.random() * 1e9) | 0; render(); }
+  });
+
+  let tt = 0;
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2400); }
+
+  let hits = 1;
+  try { hits = (+localStorage.getItem('gyaru-hits') || 0) + 1; localStorage.setItem('gyaru-hits', hits); } catch (e) {}
+  $('hits').innerHTML = String(1086 + hits).padStart(6, '0').split('').map(d => '<b>' + d + '</b>').join('');
+
+  render();
+})();
+</script>
+</body>
+</html>
