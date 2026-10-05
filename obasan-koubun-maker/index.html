@@ -177,7 +177,7 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
         <label class="field">元の文章
           <textarea class="src" id="src" spellcheck="false">今日は仕事が忙しかったです。
 明日はラーメンを食べに行きます。
-あなたは何してるの？
+ゆみちゃんは何してるの？
 おやすみなさい。</textarea>
         </label>
         <div class="row">
@@ -192,19 +192,6 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
         <div class="slider">
           <label for="level">おばさん度</label><span class="v" id="levelV">LV.3</span>
           <input type="range" id="level" min="1" max="5" step="1" value="3">
-        </div>
-        <div class="field-row">
-          <label class="field">相手の名前
-            <input class="text-in" id="name" type="text" value="ゆみ" maxlength="20">
-          </label>
-          <label class="field">一人称
-            <select id="me">
-              <option value="おばちゃん" selected>おばちゃん</option>
-              <option value="私">私</option>
-              <option value="アタシ">アタシ</option>
-              <option value="ママ">ママ</option>
-            </select>
-          </label>
         </div>
       </fieldset>
 
@@ -257,7 +244,7 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
     [/パン/, '🍞'], [/みかん/, '🍊'], [/ドラマ|テレビ/, '📺'], [/買い物|セール|デパート/, '🛍️'], [/孫/, '👶'],
     [/仕事|会議|残業/, '💼'], [/会社/, '🏢'], [/電車/, '🚃'], [/車/, '🚗'], [/雨/, '☔'],
     [/晴れ|天気/, '☀️'], [/暑/, '🥵', 1], [/寒/, '🥶', 1], [/雪/, '⛄'], [/好き/, '💕'], [/可愛|かわいい|カワイイ/, '🥰', 1],
-    [/寝|眠/, '😴', 1], [/楽し/, '😆', 1], [/嬉し|うれし/, '😊', 1], [/悲し/, '😢', 1], [/疲れ/, '💦', 1], [/風邪|熱/, '😷'],
+    [/寝|眠/, '😴', 1], [/楽し/, '😆', 1], [/嬉し|うれし/, '😊', 1], [/悲し/, '😢', 1], [/疲れ(?!様|さま)/, '💦', 1], [/風邪|熱/, '😷'],
     [/病院/, '🏥'], [/誕生日/, '🎂'], [/おめでとう/, '🎉'], [/旅行/, '✈️'], [/温泉/, '♨️'], [/海/, '🏖️'], [/猫|ねこ/, '🐱'],
     [/犬|いぬ/, '🐶'], [/桜/, '🌸'], [/花/, '💐'], [/夜/, '🌙'], [/朝/, '☀️'], [/写真/, '📷'], [/電話/, '📞'],
     [/頑張|がんば/, '💪', 1], [/お金/, '💰'], [/映画/, '🎬'], [/カラオケ|歌/, '🎤'], [/ヨガ|ジム/, '🧘‍♀️'],
@@ -286,6 +273,21 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
     return ['寒い日が続くわね〜', '⛄'];
   }
 
+  const NOT_NAME = /^(皆|みな|みんな|お客|奥|お母|お父|お兄|お姉|お嬢|おばあ|おじい|おじ|おば|お子|お医者|店員|お隣|ご近所|大家|運転手|先生|母|父|兄|姉|叔母|叔父|伯母|伯父|皆様|神|仏|お天道|お疲れ|ご苦労|お世話)$/;
+  function findName(t) {
+    const pats = [
+      /(?:^|[\s、。！？!?「『（(])([^\s、。！？!?「」『』（）()はがもをにでとへやの]{1,6})(ちゃん|チャン|さん|くん|君|様|さま)/m,
+      /([一-鿿々]{1,4}|[ァ-ヺー]{2,6}|[A-Za-z]{2,10})(ちゃん|チャン|さん|くん|君|様|さま)/,
+    ];
+    for (const re of pats) {
+      const m = t.match(re);
+      if (m && !NOT_NAME.test(m[1]) && !/^[はがもをにでとへやの]/.test(m[1])) return m[1] + m[2];
+    }
+    const v = t.match(/^([一-鿿々ァ-ヺーぁ-ゖA-Za-z]{1,6})[、,]/m);
+    if (v && !NOT_NAME.test(v[1].replace(/(ちゃん|チャン|さん|くん|君|様|さま)$/, '')) && !/^(あの|その|この|でも|あと|今日|明日|昨日|さて|ちなみに|それで|そうそう|ところで|実は|ねえ|ねぇ|あら|まぁ|まあ|はい|いいえ|うん|ええ|あっ|おはよう|こんにちは|こんばんは)$/.test(v[1])) return v[1];
+    return '';
+  }
+
   function convert(text, o) {
     const r = rng(seed);
     const pick = a => a[Math.floor(r() * a.length)];
@@ -293,14 +295,12 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
     const L = o.level;
     const nb = x => o.long ? x.replace(/〜/g, L >= 5 ? '〜〜' : '〜') : x.replace(/〜/g, '');
     const P = a => nb(pick(a));
-    const nm = o.name ? o.name + 'ちゃん' : '';
+    const nm = findName(text.replace(/\r/g, ''));
     const emo = (pool, n) => { if (!o.emoji) return ''; let s = ''; for (let i = 0; i < n; i++) s += pick(pool); return s; };
     const kao = pool => o.kao ? pick(pool) : '';
 
     let t = text.replace(/\r/g, '').trim();
     if (!t) return '';
-    t = t.replace(/(私|わたし|僕|ぼく|俺|おれ)(?![いう])/g, o.me);
-    t = t.replace(/あなた|お前|きみ(?=は|が|も|の|に|を)|君(?=は|が|も|の|に|を)/g, nm || 'あなた');
     t = t.replace(/[…‥]+|\.{3,}|・{3,}/g, '、、、');
     t = t.replace(/[（(]笑[)）]|[wｗ]{1,}(?=[\s。！？!?]|$)|草(?=[\s。！？!?]|$)/g, '（笑）');
 
@@ -366,7 +366,7 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
           if (/ですか$/.test(s)) s += P(['〜', 'ね〜']);
           else if (/(かな|かい|か)$/.test(s)) s = s.replace(/(かな|かい|か)$/, '') + P(['かしら', 'かな〜', 'かしら〜']);
           else if (/の$/.test(s)) s += P(['〜', '']);
-          else s += P(['〜', 'の〜']);
+          else s += P(['〜', 'かしら']);
         } else if (/でした$/.test(s)) s += P(['〜', 'よ〜']);
         else if (/です$/.test(s)) s = s.replace(/です$/, P(['です〜', 'ですよ〜', 'でーす', 'ですね〜']));
         else if (/ました$/.test(s)) s += P(['〜', 'よ〜', 'ー']);
@@ -397,24 +397,22 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
     });
 
     if (o.bye && L >= 2) {
-      const me = o.me;
       const byes = [
         nb('体に気をつけてね〜') + emo(['🍀','😊','💐'], 2),
         nb('無理しないでね〜') + emo(['😊','💕','🌸'], 2),
         nb('今度、お茶でもしましょうね〜') + emo(['☕','🍰','🍵'], 2),
         nb('返信はいつでもいいからね〜') + kao(KAO.happy),
         nb('温かくして寝るのよ〜') + emo(['😴','💤','🌙'], 1),
-        me + nb('はいつでも応援してるわよ〜') + emo(['📣','✨','💪'], 2),
+        nb('いつでも応援してるわよ〜') + emo(['📣','✨','💪'], 2),
         nb('またね〜') + emo(['👋','😊','💕'], 2),
       ];
       out.push((nm && L >= 4 && chance(0.6) ? nm + '、' : '') + pick(byes) + (L >= 4 ? kao(KAO.happy) : ''));
     }
 
     if (o.ps) {
-      const me = o.me;
       out.push('P.S. ' + pick([
         nb('昨日、韓国ドラマ見て泣いちゃった〜') + emo(['😭','📺','💦'], 2),
-        me + nb('、ヨガ始めたのよ〜') + emo(['🧘‍♀️','✨'], 2) + kao(KAO.happy),
+        nb('最近、ヨガ始めたのよ〜') + emo(['🧘‍♀️','✨'], 2) + kao(KAO.happy),
         nb('飴ちゃん、いる〜？') + emo(['🍬'], 1) + kao(KAO.happy),
         nb('駅前のパン屋さん、美味しかったわよ〜') + emo(['🥐','😋'], 2),
         nb('みかんたくさんもらったから、今度送るわね〜') + emo(['🍊','📦'], 2),
@@ -427,8 +425,6 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
   function opts() {
     return {
       level: +$('level').value,
-      name: $('name').value.trim().replace(/(ちゃん|チャン|さん)$/, ''),
-      me: $('me').value,
       emoji: $('fxEmoji').checked,
       kao: $('fxKao').checked,
       long: $('fxLong').checked,
@@ -453,9 +449,8 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
   }
   function schedule() { clearTimeout(timer); timer = setTimeout(render, 80); }
 
-  ['src', 'name', 'level', 'me', 'fxEmoji', 'fxKao', 'fxLong', 'fxDots', 'fxAra', 'fxHello', 'fxSeason', 'fxBye', 'fxPs', 'fxGap']
+  ['src', 'level', 'fxEmoji', 'fxKao', 'fxLong', 'fxDots', 'fxAra', 'fxHello', 'fxSeason', 'fxBye', 'fxPs', 'fxGap']
     .forEach(id => $(id).addEventListener('input', schedule));
-  $('me').addEventListener('change', schedule);
   $('reroll').addEventListener('click', () => { seed = (Math.random() * 1e9) | 0; render(); });
   $('clear').addEventListener('click', () => { $('src').value = ''; render(); $('src').focus(); });
 
