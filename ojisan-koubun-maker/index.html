@@ -116,7 +116,6 @@ textarea.src {
 }
 .text-in, select { font: inherit; font-size: 15px; width: 100%; padding: 3px 6px; border: 2px inset #fff; background: #fff; color: #000; }
 .field { display: grid; gap: 2px; font-size: 14px; }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
 .slider { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; align-items: center; }
 .slider span.v { font-family: var(--font-pixel); font-size: 10px; color: #000; background: var(--lime); border: 2px inset #fff; padding: 2px 4px; }
@@ -175,7 +174,7 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
 
       <div class="group">
         <label class="field">元の文章
-          <textarea class="src" id="src" spellcheck="false">今日は仕事が忙しかったです。
+          <textarea class="src" id="src" spellcheck="false">ゆみちゃん、今日は仕事が忙しかったです。
 明日はラーメンを食べに行きます。
 あなたは何してるの？
 おやすみなさい。</textarea>
@@ -192,19 +191,6 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
         <div class="slider">
           <label for="level">おじさん度</label><span class="v" id="levelV">LV.3</span>
           <input type="range" id="level" min="1" max="5" step="1" value="3">
-        </div>
-        <div class="field-row">
-          <label class="field">相手の名前
-            <input class="text-in" id="name" type="text" value="ゆみ" maxlength="20">
-          </label>
-          <label class="field">一人称
-            <select id="me">
-              <option value="おじさん" selected>おじさん</option>
-              <option value="ボク">ボク</option>
-              <option value="オレ">オレ</option>
-              <option value="ワシ">ワシ</option>
-            </select>
-          </label>
         </div>
       </fieldset>
 
@@ -271,18 +257,40 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
   const isNoun = c => /[一-鿿ァ-ヺー々A-Za-z0-9]/.test(c);
   const isJa = c => /[ぁ-ゖァ-ヺ一-鿿ー々]/.test(c);
 
+  const NOT_NAME = /^(お?じ|お?ば|おとう|おかあ|お父|お母|お兄|お姉|おにい|おねえ|奥|お客|おきゃく|皆|みな|みんな|お疲れ|おつかれ)$/;
+  function findName(text) {
+    const re = /(ちゃん|チャン|さん|サン|くん|クン|君|様|さま)/g;
+    let m;
+    while ((m = re.exec(text))) {
+      let k = m.index;
+      const c = text[k - 1];
+      if (!c) continue;
+      const cls = /[ぁ-ゖ]/.test(c) ? /[ぁ-ゖ]/ : /[ァ-ヺー]/.test(c) ? /[ァ-ヺー]/ : /[一-鿿々]/.test(c) ? /[一-鿿々]/ : /[A-Za-z]/.test(c) ? /[A-Za-z]/ : null;
+      if (!cls) continue;
+      while (k > 0 && cls.test(text[k - 1]) && m.index - k < 6 && !(cls.source === '[ぁ-ゖ]' && m.index - k > 0 && /[はがもをにとでへやの]/.test(text[k - 1]))) k--;
+      const base = text.slice(k, m.index);
+      if (!base || NOT_NAME.test(base) || (m[1] === '君' && /[ぁ-ゖ]/.test(c))) continue;
+      return base + (/ちゃん|チャン/.test(m[1]) ? 'チャン' : m[1]);
+    }
+    return '';
+  }
+  function findMe(text) {
+    const m = text.match(/私|わたし|ワタシ|僕|ぼく|ボク|俺|おれ|オレ|ワシ|わし|あたし|うち|自分/);
+    return m ? m[0] : 'おじさん';
+  }
+
   function convert(text, o) {
     const r = rng(seed);
     const pick = a => a[Math.floor(r() * a.length)];
     const chance = p => r() < p;
     const L = o.level;
-    const nm = o.name ? o.name + 'チャン' : '';
+    const nm = findName(text);
+    const me = findMe(text);
     const emo = (pool, n) => { if (!o.emoji) return ''; let s = ''; for (let i = 0; i < n; i++) s += pick(pool); return s; };
 
     let t = text.replace(/\r/g, '').trim();
     if (!t) return '';
-    t = t.replace(/(私|わたし|僕|ぼく|俺|おれ)(?![いう])/g, o.me);
-    t = t.replace(/あなた|お前|きみ(?=は|が|も|の|に|を)|君(?=は|が|も|の|に|を)/g, nm || 'キミ');
+    t = t.replace(/あなた|お前|(?<![一-鿿ァ-ヺぁ-ゖ])(きみ|君)(?=は|が|も|の|に|を)/g, nm || 'キミ');
     t = t.replace(/[…‥]+|\.{3,}|・{3,}/g, '、、、');
     t = t.replace(/[（(]笑[)）]|[wｗ]{1,}(?=[\s。！？!?]|$)|草(?=[\s。！？!?]|$)/g, '（笑）');
 
@@ -299,7 +307,9 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
       const h = new Date().getHours();
       const g = h < 10 ? 'オハヨー' + emo(['☀️','😃','😄'], 1) : h < 18 ? 'お疲れサマ' + emo(['😃','😊','✨'], 1) : 'コンバンハ' + emo(['🌙','😃','🍺'], 1);
       const first = parts[0] || '';
-      if (!GREET.some(([re]) => re.test(first))) hello = (nm ? nm + '、' : '') + g + (L >= 4 ? emo(E.bang, 1) : '');
+      const named = nm && first.includes(nm.replace(/(チャン|さん|サン|くん|クン|君|様|さま)$/, ''));
+      const firstBody = first.replace(/^[^、]{1,12}、/, '');
+      if (!GREET.some(([re]) => re.test(first) || re.test(firstBody))) hello = (nm && !named ? nm + '、' : '') + g + (L >= 4 ? emo(E.bang, 1) : '');
     }
     if (hello) out.push(hello);
 
@@ -310,15 +320,17 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
       const sad = SAD.test(s);
 
       let greeted = false;
+      const lead = (s.match(/^[^、]{1,12}、/) || [''])[0];
+      const body = lead && GREET.some(([re]) => re.test(s.slice(lead.length))) ? s.slice(lead.length) : s;
       for (const [re, rep, e] of GREET) {
-        if (re.test(s)) {
-          s = s.replace(re, (i === 0 && nm && o.hello && !hello ? nm + '、' : '') + rep + (o.emoji ? e : ''));
+        if (re.test(body)) {
+          s = (lead && body !== s ? lead : '') + body.replace(re, (i === 0 && nm && !lead && o.hello && !hello ? nm + '、' : '') + rep + (o.emoji ? e : ''));
           greeted = true;
           break;
         }
       }
 
-      if (o.emoji && L >= 2) {
+      if (o.emoji && L >= 2 && !greeted) {
         const used = new Set();
         for (const [re, e, verb] of WORDS) {
           if (used.size >= Math.ceil(L / 2)) break;
@@ -341,7 +353,7 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
       if (!greeted && isJa(last)) {
         if (ask) {
           s = s.replace(/(かな|かい|の|か)$/, '');
-          s += pick(L >= 3 ? ['カナ', 'のカナ', 'カナ〜'] : ['かな', 'カナ']);
+          s += isNoun(s.slice(-1)) ? pick(['カナ', 'カナ〜']) : pick(L >= 3 ? ['カナ', 'のカナ', 'カナ〜'] : ['かな', 'カナ']);
         } else if (/でした$/.test(s)) s += pick(['ヨ', 'ネ', '']);
         else if (/です$/.test(s)) s = isNoun(s.slice(-3, -2)) && chance(0.6) ? s.replace(/です$/, pick(['だヨ', 'だネ'])) : s + pick(['ヨ', 'ネ', '']);
         else if (/ました$/.test(s)) s += pick(['ヨ', 'ヨ〜', '']);
@@ -379,7 +391,6 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
     }
 
     if (o.bye && L >= 2) {
-      const me = o.me;
       const byes = [
         '今日も一日、頑張ろうネ' + emo(['💪','😄','✨'], 2),
         '無理しないでネ' + emo(['😘','😊','💕'], 2),
@@ -393,7 +404,6 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
     }
 
     if (o.ps) {
-      const me = o.me;
       out.push('P.S. ' + pick([
         me + '、最近ゴルフ始めたヨ' + emo(['⛳','😁'], 2) + '今度教えてアゲルネ' + emo(E.bang, 1),
         '駅前に美味しいお店見つけたヨ' + emo(['🍜','😋'], 2) + 'ナンチャッテ' + emo(['😜'], 1),
@@ -408,8 +418,6 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
   function opts() {
     return {
       level: +$('level').value,
-      name: $('name').value.trim().replace(/(ちゃん|チャン|さん)$/, ''),
-      me: $('me').value,
       emoji: $('fxEmoji').checked,
       kana: $('fxKana').checked,
       comma: $('fxComma').checked,
@@ -425,7 +433,6 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
     const o = opts();
     $('levelV').textContent = 'LV.' + o.level;
     $('badge').textContent = 'LV.' + o.level + ' ' + ['NOVICE', 'NORMAL', 'OJISAN', 'SUPER OJISAN', 'LEGEND OJISAN'][o.level - 1];
-    $('who').textContent = o.me === 'おじさん' ? 'おじさん' : o.me + '（おじさん）';
     const res = convert($('src').value, o);
     $('out').textContent = res || '（ここにおじさんの返事が出るヨ😃）';
     const d = new Date();
@@ -433,9 +440,8 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
   }
   function schedule() { clearTimeout(timer); timer = setTimeout(render, 80); }
 
-  ['src', 'name', 'level', 'me', 'fxEmoji', 'fxKana', 'fxComma', 'fxJoke', 'fxHello', 'fxBye', 'fxPs', 'fxGap']
+  ['src', 'level', 'fxEmoji', 'fxKana', 'fxComma', 'fxJoke', 'fxHello', 'fxBye', 'fxPs', 'fxGap']
     .forEach(id => $(id).addEventListener('input', schedule));
-  $('me').addEventListener('change', schedule);
   $('reroll').addEventListener('click', () => { seed = (Math.random() * 1e9) | 0; render(); });
   $('clear').addEventListener('click', () => { $('src').value = ''; render(); $('src').focus(); });
 
