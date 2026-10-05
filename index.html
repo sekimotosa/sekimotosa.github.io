@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>メーカーのへや</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap">
+<style>
+:root {
+  --bg: #000033;
+  --star: #ffffff;
+  --fg: #ffffff;
+  --yellow: #ffff00;
+  --red: #ff0000;
+  --lime: #00ff00;
+  --cyan: #00ffff;
+  --magenta: #ff00ff;
+  --silver: #c0c0c0;
+  --bezel: #3a3a3a;
+  --link: #00ffff;
+  --visited: #ff99ff;
+  --font-dot: "DotGothic16", "MS Gothic", "Osaka", monospace;
+  --font-pixel: "Press Start 2P", "DotGothic16", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body {
+  color: var(--fg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1px 1px at 10px 20px, var(--star), transparent),
+    radial-gradient(1px 1px at 70px 90px, var(--star), transparent),
+    radial-gradient(2px 2px at 130px 40px, var(--yellow), transparent),
+    radial-gradient(1px 1px at 160px 140px, var(--star), transparent),
+    radial-gradient(1px 1px at 40px 160px, var(--cyan), transparent),
+    radial-gradient(2px 2px at 100px 120px, var(--star), transparent);
+  background-size: 180px 180px;
+}
+body { margin: 0; font-family: var(--font-dot); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 12px 16px 40px; display: grid; gap: 18px; }
+.marquee { overflow: hidden; white-space: nowrap; background: var(--red); color: var(--yellow); border: 3px ridge var(--yellow); font-size: 15px; padding: 2px 0; }
+.marquee span { display: inline-block; padding-left: 100%; animation: scroll 18s linear infinite; }
+@keyframes scroll { to { transform: translateX(-100%); } }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { visibility: hidden; } }
+
+header { text-align: center; display: grid; gap: 6px; justify-items: center; padding-top: 6px; }
+h1 {
+  margin: 0; font-family: var(--font-dot); font-weight: 400;
+  font-size: clamp(32px, 9vw, 64px); line-height: 1.15; color: var(--yellow);
+  text-shadow: 3px 3px 0 var(--red), 6px 6px 0 var(--magenta), 9px 9px 0 #000;
+  transform: rotate(-2deg);
+}
+.sub { font-family: var(--font-pixel); font-size: 11px; color: var(--cyan); letter-spacing: .1em; }
+.tag { margin: 0; color: var(--lime); font-size: 15px; }
+
+.counter { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 14px; color: var(--silver); flex-wrap: wrap; }
+.digits { display: inline-flex; gap: 2px; }
+.digits b { background: #000; color: var(--lime); border: 2px inset #555; font-family: var(--font-pixel); font-size: 12px; padding: 4px 3px; font-weight: 400; }
+
+hr.rainbow { border: 0; height: 6px; margin: 0; background: linear-gradient(90deg, red, orange, yellow, lime, cyan, blue, magenta, red); }
+
+.menu { background: var(--bezel); border: 6px outset #777; border-radius: 22px; padding: 16px; display: grid; gap: 12px; }
+.menu h2 { margin: 0; text-align: center; font-weight: 400; font-size: 22px; color: var(--yellow); text-shadow: 2px 2px 0 var(--red); }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.item a {
+  display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: center;
+  background: #000; border: 4px inset #222; border-radius: 14px; padding: 12px;
+  color: var(--link); text-decoration: none;
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px);
+}
+.item a:visited { color: var(--visited); }
+.item a:hover, .item a:focus-visible { outline: 3px dashed var(--yellow); outline-offset: 2px; box-shadow: inset 0 0 30px rgba(0,255,255,.35); }
+.icon { width: 64px; height: 64px; display: grid; place-items: center; font-size: 38px; line-height: 1; background: var(--c, #222); border: 3px outset #aaa; }
+.body { min-width: 0; display: grid; gap: 2px; }
+.name { font-size: 20px; text-decoration: underline; overflow-wrap: anywhere; }
+.desc { color: var(--fg); font-size: 14px; }
+.url { color: var(--silver); font-size: 11px; font-family: var(--font-pixel); overflow-wrap: anywhere; line-height: 1.6; }
+.new { display: inline-block; margin-left: 6px; background: var(--red); color: var(--yellow); font-family: var(--font-pixel); font-size: 9px; padding: 3px 5px; transform: rotate(-8deg); text-decoration: none; vertical-align: middle; }
+.press { text-align: center; font-family: var(--font-pixel); font-size: 10px; color: var(--lime); }
+
+.kiriban { text-align: center; color: var(--magenta); font-size: 14px; margin: 0; }
+footer { text-align: center; color: var(--silver); font-size: 12px; display: grid; gap: 4px; }
+footer .pixel { font-family: var(--font-pixel); font-size: 9px; }
+
+@media (max-width: 480px) {
+  .item a { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; padding: 10px; }
+  .icon { width: 52px; height: 52px; font-size: 30px; }
+  .name { font-size: 18px; }
+  .menu { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee span, .blink { animation: none; }
+  .marquee span { padding-left: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="marquee"><span>★☆★ ようこそ！ メーカーのへや へ！！ ★☆★ 気になるメーカーで あそんでいってネ ★☆★ リンクフリーです ★☆★ 相互リンク募集中！？ ★☆★</span></div>
+
+  <header>
+    <h1>メーカーのへや</h1>
+    <div class="sub">MAKER LINKS <span class="blink">▼</span></div>
+    <p class="tag">ここで つくった メーカー を ぜんぶ のせてます</p>
+  </header>
+
+  <div class="counter">あなたは <span class="digits" id="counter"></span> 人目のお客様です</div>
+
+  <hr class="rainbow">
+
+  <section class="menu">
+    <h2>◆ メーカー いちらん ◆</h2>
+    <ul class="list" id="list"></ul>
+    <div class="press"><span class="blink">PRESS LINK TO START</span></div>
+  </section>
+
+  <p class="kiriban">キリ番ふんだら 自慢してネ！</p>
+
+  <hr class="rainbow">
+
+  <footer>
+    <div>このページは リンクフリー です</div>
+    <div class="pixel">(C) MAKER NO HEYA</div>
+  </footer>
+</div>
+
+<script>
+const MAKERS = [
+  {
+    name: "ゲーミング画像メーカー",
+    url: "https://sekimotosa.github.io/gaming-image-maker/",
+    desc: "画像を虹色にピカピカ光らせる",
+    icon: "🌈",
+    color: "#6600cc",
+  },
+  {
+    name: "集中線メーカー",
+    url: "https://sekimotosa.github.io/shuchusen-maker/",
+    desc: "画像にドーン！と集中線をつける",
+    icon: "💥",
+    color: "#cc0000",
+  },
+  {
+    name: "おじさん構文メーカー",
+    url: "https://sekimotosa.github.io/ojisan-koubun-maker/",
+    desc: "ふつうの文章をおじさん構文に変換する",
+    icon: "😅",
+    color: "#cc8800",
+  },
+];
+
+const list = document.getElementById("list");
+MAKERS.forEach((m, i) => {
+  const li = document.createElement("li");
+  li.className = "item";
+  const a = document.createElement("a");
+  a.href = m.url;
+  a.target = "_blank";
+  a.rel = "noopener";
+
+  const icon = document.createElement("span");
+  icon.className = "icon";
+  icon.style.setProperty("--c", m.color);
+  icon.textContent = m.icon;
+
+  const body = document.createElement("span");
+  body.className = "body";
+  const name = document.createElement("span");
+  name.className = "name";
+  name.textContent = m.name;
+  if (i === MAKERS.length - 1) {
+    const nw = document.createElement("span");
+    nw.className = "new";
+    nw.textContent = "NEW!";
+    name.append(nw);
+  }
+  const desc = document.createElement("span");
+  desc.className = "desc";
+  desc.textContent = m.desc;
+  const url = document.createElement("span");
+  url.className = "url";
+  url.textContent = m.url.replace(/^https:\/\//, "");
+  body.append(name, desc, url);
+
+  a.append(icon, body);
+  li.append(a);
+  list.append(li);
+});
+
+let count = 0;
+try {
+  count = Number(localStorage.getItem("maker-links-count") || 0) + 1;
+  localStorage.setItem("maker-links-count", String(count));
+} catch (e) {
+  count = 1;
+}
+const shown = String(count).padStart(6, "0");
+document.getElementById("counter").innerHTML = [...shown].map(d => `<b>${d}</b>`).join("");
+</script>
+</body>
+</html>
