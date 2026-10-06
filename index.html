@@ -246,13 +246,17 @@ const history = document.getElementById("history");
   history.append(li);
 });
 
-let count = 0;
-try {
-  count = Number(localStorage.getItem("maker-links-count") || 0) + 1;
-  localStorage.setItem("maker-links-count", String(count));
-} catch (e) {
-  count = 1;
+const COUNT_KEY = "maker-links-count";
+const readCookie = name => {
+  const hit = document.cookie.split("; ").find(c => c.startsWith(name + "="));
+  return hit ? decodeURIComponent(hit.slice(name.length + 1)) : null;
+};
+let prev = Number(readCookie(COUNT_KEY));
+if (!prev) {
+  try { prev = Number(localStorage.getItem(COUNT_KEY)) || 0; } catch (e) { prev = 0; }
 }
+const count = prev + 1;
+document.cookie = `${COUNT_KEY}=${count}; max-age=${60 * 60 * 24 * 365 * 10}; path=/; SameSite=Lax`;
 document.getElementById("counter").innerHTML = [...String(count).padStart(6, "0")].map(d => `<b>${d}</b>`).join("");
 </script>
 </body>
