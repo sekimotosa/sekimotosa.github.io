@@ -201,7 +201,7 @@ const MAKERS = [
 ];
 
 const list = document.getElementById("list");
-MAKERS.forEach((m, i) => {
+MAKERS.map((m, i) => ({ m, i })).reverse().forEach(({ m, i }) => {
   const tr = document.createElement("tr");
 
   const no = document.createElement("td");
