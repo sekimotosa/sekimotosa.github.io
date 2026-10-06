@@ -246,17 +246,16 @@ const history = document.getElementById("history");
   history.append(li);
 });
 
-const COUNT_KEY = "maker-links-count";
-const readCookie = name => {
-  const hit = document.cookie.split("; ").find(c => c.startsWith(name + "="));
-  return hit ? decodeURIComponent(hit.slice(name.length + 1)) : null;
-};
-let prev = Number(readCookie(COUNT_KEY));
-if (!prev) {
-  try { prev = Number(localStorage.getItem(COUNT_KEY)) || 0; } catch (e) { prev = 0; }
-}
-const count = prev + 1;
-document.cookie = `${COUNT_KEY}=${count}; max-age=${60 * 60 * 24 * 365 * 10}; path=/; SameSite=Lax`;
+let count = 1;
+try {
+  const getCookie = k => { const c = document.cookie.split("; ").find(x => x.startsWith(k + "=")); return c ? c.slice(k.length + 1) : null; };
+  count = +getCookie("maker-links-count") || +localStorage.getItem("maker-links-count") || 0;
+  if (!getCookie("maker-links-visit") || !count) {
+    count += 1;
+    document.cookie = `maker-links-count=${count}; max-age=315360000; path=/; SameSite=Lax`;
+  }
+  document.cookie = "maker-links-visit=1; max-age=1800; path=/; SameSite=Lax";
+} catch (e) {}
 document.getElementById("counter").innerHTML = [...String(count).padStart(6, "0")].map(d => `<b>${d}</b>`).join("");
 </script>
 </body>

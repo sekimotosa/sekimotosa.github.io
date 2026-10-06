@@ -443,8 +443,16 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
     return c;
   }
   let hits = 1;
-  try { hits = (+localStorage.getItem('shuchusen-hits') || 0) + 1; localStorage.setItem('shuchusen-hits', hits); } catch (e) {}
-  $('hits').innerHTML = String(3150 + hits).padStart(6, '0').split('').map(d => '<b>' + d + '</b>').join('');
+  try {
+    const getCookie = k => { const c = document.cookie.split('; ').find(x => x.startsWith(k + '=')); return c ? c.slice(k.length + 1) : null; };
+    hits = +getCookie('maker-links-count') || +localStorage.getItem('maker-links-count') || 0;
+    if (!getCookie('maker-links-visit') || !hits) {
+      hits += 1;
+      document.cookie = 'maker-links-count=' + hits + '; max-age=315360000; path=/; SameSite=Lax';
+    }
+    document.cookie = 'maker-links-visit=1; max-age=1800; path=/; SameSite=Lax';
+  } catch (e) {}
+  $('hits').innerHTML = String(hits).padStart(6, '0').split('').map(d => '<b>' + d + '</b>').join('');
 
   syncLabels();
   src = sample();
