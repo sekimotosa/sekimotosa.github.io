@@ -96,6 +96,14 @@ legend { padding: 0 4px; color: #000080; font-weight: 700; }
 .arcade.green { background: #00aa00; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 input[type=file] { display: none; }
+.pastebox {
+  min-height: 46px; padding: 8px; border: 3px dashed #000080; background: #fff; color: #000;
+  font-size: 14px; text-align: center; display: grid; place-items: center; overflow: hidden;
+  caret-color: transparent; -webkit-user-select: text; user-select: text; cursor: text; word-break: break-all;
+}
+.pastebox:empty::before { content: attr(data-ph); color: #000080; pointer-events: none; }
+.pastebox:focus { outline: 3px dashed var(--magenta); outline-offset: 2px; background: #ffffcc; }
+.pastebox img { max-width: 100%; max-height: 40px; }
 
 .slider { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; align-items: center; }
 .slider span.v { font-family: var(--font-pixel); font-size: 10px; color: #000; background: var(--lime); border: 2px inset #fff; padding: 2px 4px; font-variant-numeric: tabular-nums; }
@@ -147,7 +155,9 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
       <div class="group">
         <label class="arcade" for="file">ファイルを選ぶ</label>
         <input type="file" id="file" accept="image/*">
-        <p class="note">貼り付け（<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>V</kbd>）とドラッグ＆ドロップもOK！</p>
+        <button class="arcade yellow" id="clip" type="button">クリップボードから貼り付け</button>
+        <div class="pastebox" id="pastebox" contenteditable="true" inputmode="none" role="textbox" aria-label="画像の貼り付け欄" data-ph="ここを長押しして「ペースト」"></div>
+        <p class="note">ボタンで読めないときは、上の枠を長押しして「ペースト」を選んでね。パソコンなら <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>V</kbd> とドラッグ＆ドロップもOK！</p>
       </div>
 
       <fieldset class="group">
@@ -217,11 +227,63 @@ input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: #000080; }
     src = c; userImage = true; seed = (Math.random() * 1e9) | 0; render();
   }
   $('file').addEventListener('change', e => { const f = e.target.files[0]; if (f) loadBlob(f, f.name); e.target.value = ''; });
+  const PASTED = '貼り付けた画像';
+  function imageFromData(dt) {
+    if (!dt) return null;
+    const f = [...(dt.files || [])].find(f => f.type.startsWith('image/'));
+    if (f) return f;
+    const it = [...(dt.items || [])].find(i => i.kind === 'file' && i.type.startsWith('image/'));
+    return it ? it.getAsFile() : null;
+  }
   document.addEventListener('paste', e => {
-    const items = e.clipboardData ? [...e.clipboardData.items] : [];
-    const it = items.find(i => i.type.startsWith('image/'));
-    if (it) { e.preventDefault(); loadBlob(it.getAsFile(), '貼り付けた画像'); }
+    if (pastebox.contains(e.target)) return;
+    const f = imageFromData(e.clipboardData);
+    if (f) { e.preventDefault(); loadBlob(f, PASTED); }
     else toast('クリップボードに画像がありません');
+  });
+  // 長押しメニューの「ペースト」を受ける欄。画像データが直接取れない端末では、欄に挿入された <img> から読み込む
+  const pastebox = $('pastebox');
+  pastebox.addEventListener('paste', e => {
+    const f = imageFromData(e.clipboardData);
+    if (f) { e.preventDefault(); loadBlob(f, PASTED); clearBox(); return; }
+    setTimeout(pickFromBox, 50);
+  });
+  pastebox.addEventListener('input', () => setTimeout(pickFromBox, 50));
+  pastebox.addEventListener('drop', e => e.preventDefault());
+  function clearBox() { pastebox.innerHTML = ''; pastebox.blur(); }
+  function pickFromBox() {
+    const img = pastebox.querySelector('img');
+    const text = pastebox.textContent.trim();
+    if (!img) { if (text) toast('画像をコピーしてから貼り付けてね'); pastebox.innerHTML = ''; return; }
+    const url = img.currentSrc || img.src;
+    clearBox();
+    fetch(url).then(r => r.blob()).then(b => {
+      if (b.type.startsWith('image/')) loadBlob(b, PASTED); else loadUrl(url);
+    }).catch(() => loadUrl(url));
+  }
+  function loadUrl(url) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => { setSource(img, img.naturalWidth, img.naturalHeight); $('badge').textContent = PASTED; };
+    img.onerror = () => toast('この画像は読み込めませんでした。保存してから「ファイルを選ぶ」で開いてね');
+    img.src = url;
+  }
+  $('clip').addEventListener('click', async () => {
+    if (!navigator.clipboard || !navigator.clipboard.read) {
+      toast('このブラウザはボタンに未対応です。下の枠を長押しして「ペースト」してね');
+      pastebox.focus(); return;
+    }
+    try {
+      for (const item of await navigator.clipboard.read()) {
+        const type = item.types.find(t => t.startsWith('image/'));
+        if (type) { loadBlob(await item.getType(type), PASTED); return; }
+      }
+      toast('クリップボードに画像がありません');
+    } catch (err) {
+      toast(err && err.name === 'NotAllowedError'
+        ? '読み取りが許可されませんでした。下の枠を長押しして「ペースト」してね'
+        : 'うまく読めませんでした。下の枠を長押しして「ペースト」してね');
+    }
   });
   const stage = $('stage');
   ['dragenter','dragover'].forEach(t => window.addEventListener(t, e => { e.preventDefault(); stage.classList.add('drag'); }));
